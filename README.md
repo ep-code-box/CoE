@@ -68,7 +68,26 @@ CoE/
 
 ## 🚀 시작하기
 
-### 1. 환경 변수 설정
+### 전제 조건
+
+시작하기 전에 다음 소프트웨어가 설치되어 있는지 확인하세요:
+
+- **Docker** (20.10 이상) 및 **Docker Compose** (2.0 이상)
+- **Git** (레포지토리 클론용)
+- **Python 3.9+** (로컬 개발 시)
+
+### 1. 프로젝트 클론 및 초기 설정
+
+```bash
+# 프로젝트 클론
+git clone <repository-url>
+cd CoE
+
+# 서브모듈 초기화 (있는 경우)
+git submodule update --init --recursive
+```
+
+### 2. 환경 변수 설정
 
 각 서비스에 필요한 환경 변수를 설정해야 합니다.
 
@@ -76,18 +95,53 @@ CoE/
 ```bash
 cd CoE-Backend
 cp .env.example .env
-# .env 파일을 편집하여 OPENAI_API_KEY 등 필요한 값을 설정
+```
+
+`.env` 파일을 편집하여 다음 값들을 설정하세요:
+```bash
+# LLM API 설정
+OPENAI_API_KEY=your_openai_api_key_here
+ANTHROPIC_API_KEY=your_anthropic_api_key_here  # 선택사항
+
+# 데이터베이스 설정
+DATABASE_URL=mysql://coe_user:coe_password@mariadb:3306/coe_db
+
+# 벡터 데이터베이스 설정
+CHROMA_HOST=chroma
+CHROMA_PORT=6666
+
+# 임베딩 서비스 설정
+EMBEDDING_SERVICE_URL=http://koEmbeddings:6668
 ```
 
 **CoE-RagPipeline 환경 변수 설정:**
 ```bash
-cd CoE-RagPipeline
+cd ../CoE-RagPipeline
 cp .env.example .env
-# 필요한 경우 .env 파일을 편집
+```
+
+`.env` 파일을 편집하여 다음 값들을 설정하세요:
+```bash
+# 데이터베이스 설정
+DATABASE_URL=mysql://coe_user:coe_password@mariadb:3306/coe_db
+
+# 벡터 데이터베이스 설정
+CHROMA_HOST=chroma
+CHROMA_PORT=6666
+
+# 임베딩 서비스 설정
+EMBEDDING_SERVICE_URL=http://koEmbeddings:6668
+
+# Git 분석 설정
+MAX_REPO_SIZE_MB=500
+ANALYSIS_TIMEOUT_MINUTES=30
+```
+
+```bash
 cd ..
 ```
 
-### 2. Docker Compose를 사용하여 전체 시스템 실행 (권장)
+### 3. Docker Compose를 사용하여 전체 시스템 실행 (권장)
 
 **간편 실행 스크립트 사용:**
 ```bash
@@ -124,7 +178,7 @@ docker-compose down -v
 - **CoE-Backend**: AI 에이전트 및 API 서버 (포트 8000)
 - **CoE-RagPipeline**: Git 분석 및 RAG 파이프라인 (포트 8001)
 
-### 3. 개별 서비스 Docker 실행
+### 4. 개별 서비스 Docker 실행
 
 필요한 경우 개별 서비스만 실행할 수 있습니다:
 
@@ -138,7 +192,7 @@ docker-compose up -d chroma mariadb koEmbeddings
 docker-compose up -d coe-backend coe-rag-pipeline
 ```
 
-### 4. 로컬에서 직접 실행
+### 5. 로컬에서 직접 실행
 
 각 프로젝트의 `README.md` 파일을 참고하여 가상 환경 설정 및 서버를 실행할 수 있습니다.
 
@@ -152,16 +206,158 @@ docker-compose up -d coe-backend coe-rag-pipeline
     - 응답으로 받은 `analysis_id`를 복사합니다.
 
 2.  **가이드 생성 요청** (`CoE-Backend`에 요청)
-    - `CoE-Backend`의 채팅 클라이언트(`python client.py`)나 API(`http://127.0.0.1:8000/chat`)를 통해 다음과 같이 요청합니다.
+    - `CoE-Backend`의 채팅 클라이언트(`python client.py`)나 API(`http://127.0.0.1:8000/v1/chat/completions`)를 통해 다음과 같이 요청합니다.
     > "analysis_id [복사한 ID]로 개발 가이드를 추출해줘"
 
 3.  **결과 확인**
     - 잠시 후, AI가 생성한 표준 개발 가이드, 공통 코드화, 공통 함수 가이드가 포함된 응답을 받게 됩니다.
 
+## 🔧 문제 해결 (Troubleshooting)
+
+### 일반적인 문제들
+
+#### Docker 관련 문제
+
+**문제**: `docker-compose up` 실행 시 포트 충돌 오류
+```
+Error: bind: address already in use
+```
+
+**해결방법**:
+```bash
+# 사용 중인 포트 확인
+sudo lsof -i :8000
+sudo lsof -i :8001
+
+# 충돌하는 프로세스 종료 후 재시도
+docker-compose down
+docker-compose up -d
+```
+
+**문제**: 컨테이너가 시작되지 않거나 즉시 종료됨
+
+**해결방법**:
+```bash
+# 로그 확인
+docker-compose logs [서비스명]
+
+# 환경 변수 확인
+docker-compose config
+
+# 컨테이너 재빌드
+docker-compose up -d --build --force-recreate
+```
+
+#### 환경 변수 관련 문제
+
+**문제**: API 키 관련 오류 또는 인증 실패
+
+**해결방법**:
+1. `.env` 파일이 올바른 위치에 있는지 확인
+2. API 키가 올바르게 설정되었는지 확인
+3. 환경 변수가 컨테이너에 전달되는지 확인:
+```bash
+docker-compose exec coe-backend env | grep API_KEY
+```
+
+#### 네트워크 연결 문제
+
+**문제**: 서비스 간 통신 실패
+
+**해결방법**:
+```bash
+# Docker 네트워크 상태 확인
+docker network ls
+docker network inspect coe_default
+
+# 서비스 간 연결 테스트
+docker-compose exec coe-backend ping coe-rag-pipeline
+```
+
+### 성능 최적화
+
+#### 메모리 사용량 최적화
+```bash
+# Docker 메모리 사용량 확인
+docker stats
+
+# 불필요한 컨테이너 정리
+docker system prune -a
+```
+
+#### 로그 관리
+```bash
+# 로그 크기 제한 설정 (docker-compose.yml에 추가)
+logging:
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+```
+
+## 🤝 기여하기 (Contributing)
+
+### 개발 환경 설정
+
+1. **Fork** 및 **Clone**:
+```bash
+git clone https://github.com/your-username/CoE.git
+cd CoE
+```
+
+2. **개발 브랜치 생성**:
+```bash
+git checkout -b feature/your-feature-name
+```
+
+3. **로컬 개발 환경 설정**:
+```bash
+# 각 서비스별로 가상 환경 설정
+cd CoE-Backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+cd ../CoE-RagPipeline
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 코드 스타일 가이드
+
+- **Python**: PEP 8 준수, Black 포매터 사용
+- **커밋 메시지**: Conventional Commits 형식 사용
+- **문서화**: 모든 새로운 기능에 대해 README 업데이트
+
+### 테스트
+
+```bash
+# Backend 테스트
+cd CoE-Backend
+python -m pytest
+
+# RagPipeline 테스트
+cd CoE-RagPipeline
+python -m pytest
+```
+
+## 📞 지원 및 문의
+
+- **이슈 리포팅**: GitHub Issues 사용
+- **기능 요청**: GitHub Discussions 사용
+- **보안 문제**: 별도 연락처로 비공개 보고
+
 ## 🗺️ 로드맵
 
-자세한 개발 현황 및 계획은 Todo.md 파일에서 확인하실 수 있습니다.
+자세한 개발 현황 및 계획은 [Todo.md](Todo.md) 파일에서 확인하실 수 있습니다.
+
+## 📄 라이선스
+
+이 프로젝트는 [MIT License](LICENSE) 하에 배포됩니다.
 
 ---
 
-더 자세한 내용은 각 하위 프로젝트의 `README.md` 파일을 참고해 주세요.
+더 자세한 내용은 각 하위 프로젝트의 `README.md` 파일을 참고해 주세요:
+- [CoE-Backend README](CoE-Backend/README.md)
+- [CoE-RagPipeline README](CoE-RagPipeline/README.md)
