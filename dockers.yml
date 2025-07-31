@@ -28,4 +28,4 @@ services:
     volumes:
       - /Users/a08418/Documents/CoE/db/koEmbeddings:/data
     restart: always
-    command: --model-id upskyy/e5-large-korean --port 80
+    command: --model-id dragonkue/multilingual-e5-small-ko --port 80
