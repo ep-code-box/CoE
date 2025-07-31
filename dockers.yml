@@ -20,15 +20,12 @@ services:
       - /Users/a08418/Documents/CoE/db/maria:/var/lib/mysql
     restart: always
 
-  kosentencebert:
-    build:
-      context: ./kosentencebert
-      dockerfile: Dockerfile
-    container_name: kosentencebert
+  koEmbeddings:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-latest
+    container_name: koEmbeddings
     ports:
-      - "6668:8080"
+      - "6668:80"
     volumes:
-      - /Users/a08418/Documents/CoE/db/kosentencebert:/app/data
+      - /Users/a08418/Documents/CoE/db/koEmbeddings:/data
     restart: always
-    environment:
-      - PYTHONPATH=/app
+    command: --model-id upskyy/e5-large-korean --port 80
