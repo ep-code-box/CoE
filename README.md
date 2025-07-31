@@ -68,43 +68,82 @@ CoE/
 
 ## 🚀 시작하기
 
-각 서비스는 독립적으로 실행되어야 합니다. 두 개의 터미널을 열고 아래 단계를 따라주세요.
-
 ### 1. 환경 변수 설정
 
-`CoE-Backend` 디렉터리에 `.env` 파일을 생성하고 LLM API 키를 설정해야 합니다.
+각 서비스에 필요한 환경 변수를 설정해야 합니다.
 
+**CoE-Backend 환경 변수 설정:**
 ```bash
 cd CoE-Backend
-echo "OPENAI_API_KEY='your-api-key'" > .env
+cp .env.example .env
+# .env 파일을 편집하여 OPENAI_API_KEY 등 필요한 값을 설정
+```
+
+**CoE-RagPipeline 환경 변수 설정:**
+```bash
+cd CoE-RagPipeline
+cp .env.example .env
+# 필요한 경우 .env 파일을 편집
 cd ..
 ```
 
-### 2. Docker를 사용하여 실행 (권장)
+### 2. Docker Compose를 사용하여 전체 시스템 실행 (권장)
 
-각 프로젝트 디렉터리에서 Docker 이미지를 빌드하고 컨테이너를 실행합니다.
-
-**터미널 1: `CoE-RagPipeline` 실행**
+**간편 실행 스크립트 사용:**
 ```bash
-cd CoE-RagPipeline
-docker build -t coe-rag-pipeline .
-docker run -d -p 8001:8001 --name rag-pipeline -v $(pwd)/output:/app/output coe-rag-pipeline
+# 전체 시스템 시작 (자동으로 환경 설정 및 디렉토리 생성)
+./run_all.sh
+
+# 전체 시스템 중지
+./stop_all.sh
 ```
 
-**터미널 2: `CoE-Backend` 실행**
+**수동 Docker Compose 명령어:**
 ```bash
-# CoE-Backend 디렉터리에 Dockerfile이 필요합니다.
-cd CoE-Backend
-docker build -t coe-backend .
-docker run -d -p 8000:8000 --name backend --env-file .env coe-backend
+# 모든 서비스 빌드 및 실행
+docker-compose up -d --build
+
+# 로그 확인
+docker-compose logs -f
+
+# 특정 서비스 로그 확인
+docker-compose logs -f coe-backend
+docker-compose logs -f coe-rag-pipeline
+
+# 서비스 중지
+docker-compose down
+
+# 볼륨까지 삭제하여 완전 정리
+docker-compose down -v
 ```
 
-### 3. 로컬에서 직접 실행
+**실행되는 서비스들:**
+- **ChromaDB**: 벡터 데이터베이스 (포트 6666)
+- **MariaDB**: 관계형 데이터베이스 (포트 6667)  
+- **Korean Embeddings**: 한국어 임베딩 서비스 (포트 6668)
+- **CoE-Backend**: AI 에이전트 및 API 서버 (포트 8000)
+- **CoE-RagPipeline**: Git 분석 및 RAG 파이프라인 (포트 8001)
+
+### 3. 개별 서비스 Docker 실행
+
+필요한 경우 개별 서비스만 실행할 수 있습니다:
+
+**인프라 서비스만 실행:**
+```bash
+docker-compose up -d chroma mariadb koEmbeddings
+```
+
+**애플리케이션 서비스만 실행:**
+```bash
+docker-compose up -d coe-backend coe-rag-pipeline
+```
+
+### 4. 로컬에서 직접 실행
 
 각 프로젝트의 `README.md` 파일을 참고하여 가상 환경 설정 및 서버를 실행할 수 있습니다.
 
-- **CoE-RagPipeline 시작 가이드**
-- **CoE-Backend 시작 가이드**
+- **CoE-RagPipeline 시작 가이드**: `CoE-RagPipeline/README.md`
+- **CoE-Backend 시작 가이드**: `CoE-Backend/README.md`
 
 ## 📖 사용 예시: 개발 가이드 추출하기
 

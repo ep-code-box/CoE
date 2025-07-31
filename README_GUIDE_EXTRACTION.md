@@ -14,13 +14,19 @@ Git 레포지토리 분석 결과를 바탕으로 **표준개발가이드**, **�
 
 ## 🏗️ 아키텍처
 
-```
-CoE-RagPipeline (분석)  →  CoE-Backend (가이드 추출)  →  사용자
-     ↓                           ↓                      ↓
-Git 레포지토리 분석        LLM 기반 가이드 추출      개발 가이드 문서
-- AST 분석               - 코드 패턴 분석          - 표준개발가이드
-- 기술스펙 분석          - 아키텍처 분석           - 공통코드화 가이드
-- 코드 메트릭            - 베스트 프랙티스 추출    - 공통함수 가이드
+```mermaid
+sequenceDiagram
+    participant User
+    participant CoE-Backend
+    participant CoE-RagPipeline
+    participant LLM
+
+    User->>CoE-Backend: 가이드 추출 요청 (질문 + analysis_id)
+    CoE-Backend->>CoE-RagPipeline: 질문으로 유사 문서 검색 (Search API)
+    CoE-RagPipeline-->>CoE-Backend: 검색 결과 (컨텍스트)
+    CoE-Backend->>LLM: 컨텍스트와 질문으로 가이드 생성 요청
+    LLM-->>CoE-Backend: 생성된 가이드
+    CoE-Backend-->>User: 최종 가이드 문서 응답
 ```
 
 ## 🚀 사용법
