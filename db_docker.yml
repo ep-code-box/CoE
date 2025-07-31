@@ -1,14 +1,11 @@
-version: '3.8'
-
 services:
   chroma:
+    image: chromadb/chroma:latest
     container_name: chroma
-    build:
-      context: https://github.com/chroma-core/chroma.git
     ports:
       - "6666:8000"
     volumes:
-      - ./chroma_/chroma/chroma
+      - /Users/a08418/Documents/CoE/db/chroma:/chroma/chroma
     environment:
       - IS_PERSISTENT=TRUE
 
@@ -20,5 +17,5 @@ services:
     environment:
       - MARIADB_ROOT_PASSWORD=acce
     volumes:
-      - ./maria_/var/lib/mysql
+      - /Users/a08418/Documents/CoE/db/maria:/var/lib/mysql
     restart: always
