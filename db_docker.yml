@@ -19,3 +19,16 @@ services:
     volumes:
       - /Users/a08418/Documents/CoE/db/maria:/var/lib/mysql
     restart: always
+
+  kosentencebert:
+    build:
+      context: ./kosentencebert
+      dockerfile: Dockerfile
+    container_name: kosentencebert
+    ports:
+      - "6668:8080"
+    volumes:
+      - /Users/a08418/Documents/CoE/db/kosentencebert:/app/data
+    restart: always
+    environment:
+      - PYTHONPATH=/app
