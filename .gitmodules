@@ -1,0 +1,6 @@
+[submodule "CoE-Backend"]
+	path = CoE-Backend
+	url = https://github.com/ep-code-box/CoE-Backend.git
+[submodule "CoE-RagPipeline"]
+	path = CoE-RagPipeline
+	url = https://github.com/ep-code-box/CoE-RagPipeline.git
