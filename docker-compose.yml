@@ -47,6 +47,23 @@ services:
     networks:
       - coe-network
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6669:6379"
+    volumes:
+      - ./db/redis:/data
+    restart: always
+    command: redis-server --appendonly yes --requirepass coe_redis_password
+    networks:
+      - coe-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # 애플리케이션 서비스들
   coe-backend:
     build:
@@ -62,6 +79,7 @@ services:
     depends_on:
       - chroma
       - mariadb
+      - redis
     restart: always
     networks:
       - coe-network
@@ -81,6 +99,7 @@ services:
     depends_on:
       - chroma
       - koEmbeddings
+      - redis
     restart: always
     networks:
       - coe-network

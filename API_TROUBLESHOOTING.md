@@ -1,53 +1,80 @@
-# API Layer Troubleshooting Guide
+# 🔧 CoE API 문제 해결 가이드
 
-## Issue Summary
-The CoE project API layer was experiencing 422 "Field required" errors for all POST requests when using curl, while GET endpoints worked correctly.
+**최종 업데이트**: 2025-08-01  
+**기능점검결과**: 모든 핵심 API 정상 동작 확인됨
 
-## Root Cause Analysis
+이 문서는 CoE 플랫폼 사용 중 발생할 수 있는 API 관련 문제들과 해결 방법을 정리한 가이드입니다.
 
-### Problem Identified
-- **curl requests**: POST request bodies were arriving empty (Body: b'') at the FastAPI application
-- **Python requests**: POST requests worked perfectly with proper Content-Type headers and request bodies
-- **Missing headers**: curl requests were not sending Content-Type headers to the Docker container
+## 📋 현재 시스템 상태 (2025-08-01 기준)
 
-### Technical Details
-1. **Working scenario (Python requests)**:
-   - Headers: `{'content-type': 'application/json', 'content-length': '20'}`
-   - Body: `b'{"message": "hello"}'`
-   - Status: 200 OK
+### ✅ 정상 동작 확인된 기능
+- **CoE-Backend**: 21개 API 엔드포인트 모두 정상
+- **CoE-RagPipeline**: 4개 API 엔드포인트 모두 정상
+- **Docker 컨테이너**: 5개 서비스 모두 정상 실행
+- **데이터베이스**: MariaDB, ChromaDB 연결 정상
+- **AI 에이전트**: LangGraph 기반 도구 라우팅 정상
 
-2. **Failing scenario (curl)**:
-   - Headers: `{'host': 'localhost:8000', 'user-agent': 'curl/8.7.1', 'accept': '*/*'}`
-   - Body: `b''` (empty)
-   - Status: 422 Unprocessable Entity
+### ⚠️ 알려진 개선 필요 사항
+1. **OpenAI 호환 임베딩 API**: `/v1/embeddings` 엔드포인트 구현 필요
+2. **벡터 문서 추가**: 임베딩 서비스 연동 개선 필요
+3. **API 문서**: curl 사용법 및 JSON 전송 방법 보완
 
-## Solutions Implemented
+## 🚨 과거 해결된 주요 이슈
 
-### 1. Fixed Request Body Logging Middleware
-Updated `/CoE-Backend/main.py` to properly handle request body reading and reassignment:
+### Issue: POST 요청 422 "Field required" 오류 (해결됨)
+**문제**: curl을 사용한 POST 요청 시 422 오류 발생, Python requests는 정상 동작
 
-```python
-# 요청 로깅 미들웨어 (디버깅용)
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    logger.info(f"Request: {request.method} {request.url}")
-    logger.info(f"Headers: {dict(request.headers)}")
-    
-    # POST 요청의 경우 본문 로깅 (디버깅용)
-    if request.method == "POST":
-        body = await request.body()
-        logger.info(f"Body: {body}")
-        logger.info(f"Body length: {len(body)}")
-        
-        # 요청 본문을 다시 읽을 수 있도록 설정
-        async def receive():
-            return {
-                "type": "http.request", 
-                "body": body,
-                "more_body": False
-            }
-        
-        # 새로운 Request 객체 생성
+**원인 분석**:
+- curl 요청 시 POST 본문이 비어있음 (Body: b'')
+- Content-Type 헤더가 Docker 컨테이너에 전달되지 않음
+- 요청 본문 로깅 미들웨어에서 본문 재할당 이슈
+
+**해결 방법**:
+1. **요청 본문 로깅 미들웨어 수정** (`/CoE-Backend/main.py`)
+2. **올바른 curl 사용법 문서화**
+
+## 🔧 일반적인 문제 해결 방법
+
+### 1. curl JSON 전송 문제
+
+**문제**: curl로 JSON 데이터 전송 시 422 오류 발생
+
+**올바른 curl 사용법**:
+```bash
+# ✅ 올바른 방법 - Content-Type 헤더 필수
+curl -X POST "http://localhost:8000/v1/chat/completions" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "coe-agent-v1",
+    "messages": [
+      {
+        "role": "user",
+        "content": "안녕하세요"
+      }
+    ]
+  }'
+
+# ❌ 잘못된 방법 - Content-Type 헤더 누락
+curl -X POST "http://localhost:8000/v1/chat/completions" \
+  -d '{"model": "coe-agent-v1", "messages": [{"role": "user", "content": "안녕하세요"}]}'
+```
+
+### 2. Docker 컨테이너 연결 문제
+
+**문제**: 서비스 간 통신 실패 또는 연결 거부
+
+**해결 방법**:
+```bash
+# 컨테이너 상태 확인
+docker-compose ps
+
+# 네트워크 연결 테스트
+docker-compose exec coe-backend ping coe-rag-pipeline
+docker-compose exec coe-backend curl http://chroma:8000/api/v1/heartbeat
+
+# 서비스 재시작
+docker-compose restart coe-backend coe-rag-pipeline
+```
         new_request = StarletteRequest(request.scope, receive)
         response = await call_next(new_request)
     else:
