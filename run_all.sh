@@ -1,9 +1,13 @@
 #!/bin/bash
 
 # CoE 전체 시스템 실행 스크립트
-# 이 스크립트는 모든 서비스를 Docker Compose로 실행합니다.
+# 이 스크립트는 다양한 환경과 옵션으로 서비스를 실행합니다.
 
 set -e  # 에러 발생 시 스크립트 중단
+
+# 기본 설정
+DEFAULT_ENV="full"
+DEFAULT_MODE="all"
 
 # 색상 정의
 RED='\033[0;31m'
@@ -209,17 +213,297 @@ check_services() {
     docker-compose ps
 }
 
+# 사용법 출력
+show_usage() {
+    echo "🚀 CoE 시스템 실행 스크립트"
+    echo ""
+    echo "사용법: $0 [환경] [모드] [옵션]"
+    echo ""
+    echo "환경 (Environment):"
+    echo "  full    - 전체 Docker 환경 (기본값)"
+    echo "  local   - 로컬 개발 환경 (인프라만 Docker)"
+    echo ""
+    echo "모드 (Mode):"
+    echo "  all       - 모든 서비스 실행 (기본값)"
+    echo "  infra     - 인프라 서비스만 실행 (ChromaDB, MariaDB, Redis)"
+    echo "  backend   - CoE-Backend만 실행"
+    echo "  pipeline  - CoE-RagPipeline만 실행"
+    echo ""
+    echo "옵션 (Options):"
+    echo "  --build   - 이미지 강제 재빌드"
+    echo "  --clean   - 기존 컨테이너 및 볼륨 정리 후 실행"
+    echo "  --help    - 도움말 표시"
+    echo ""
+    echo "예시:"
+    echo "  $0                    # 전체 Docker 환경으로 모든 서비스 실행"
+    echo "  $0 local              # 로컬 개발 환경으로 인프라만 Docker 실행"
+    echo "  $0 full infra         # 전체 Docker 환경으로 인프라만 실행"
+    echo "  $0 local all --build  # 로컬 환경으로 모든 서비스 실행 (재빌드)"
+    echo ""
+}
+
+# 인수 파싱
+parse_arguments() {
+    ENV=${1:-$DEFAULT_ENV}
+    MODE=${2:-$DEFAULT_MODE}
+    BUILD_FLAG=""
+    CLEAN_FLAG=""
+    
+    # 옵션 처리
+    for arg in "$@"; do
+        case $arg in
+            --build)
+                BUILD_FLAG="--build"
+                ;;
+            --clean)
+                CLEAN_FLAG="true"
+                ;;
+            --help|-h)
+                show_usage
+                exit 0
+                ;;
+        esac
+    done
+    
+    # 환경 검증
+    if [[ "$ENV" != "full" && "$ENV" != "local" ]]; then
+        log_error "잘못된 환경: $ENV (full 또는 local만 지원)"
+        show_usage
+        exit 1
+    fi
+    
+    # 모드 검증
+    if [[ "$MODE" != "all" && "$MODE" != "infra" && "$MODE" != "backend" && "$MODE" != "pipeline" ]]; then
+        log_error "잘못된 모드: $MODE (all, infra, backend, pipeline만 지원)"
+        show_usage
+        exit 1
+    fi
+    
+    log_info "실행 설정: 환경=$ENV, 모드=$MODE"
+}
+
+# 환경별 Docker Compose 파일 선택
+get_compose_file() {
+    case $ENV in
+        "local")
+            echo "docker-compose.local.yml"
+            ;;
+        "full")
+            echo "docker-compose.yml"
+            ;;
+    esac
+}
+
+# 모드별 서비스 선택
+get_services() {
+    case $MODE in
+        "infra")
+            echo "chroma mariadb redis"
+            ;;
+        "backend")
+            if [[ "$ENV" == "local" ]]; then
+                echo "chroma mariadb redis"  # 로컬 환경에서는 인프라만
+            else
+                echo "chroma mariadb redis coe-backend"
+            fi
+            ;;
+        "pipeline")
+            if [[ "$ENV" == "local" ]]; then
+                echo "chroma redis"  # 로컬 환경에서는 인프라만
+            else
+                echo "chroma redis coe-rag-pipeline"
+            fi
+            ;;
+        "all")
+            if [[ "$ENV" == "local" ]]; then
+                echo "chroma mariadb redis"  # 로컬 환경에서는 인프라만
+            else
+                echo ""  # 모든 서비스
+            fi
+            ;;
+    esac
+}
+
+# 기존 컨테이너 정리
+clean_containers() {
+    if [[ "$CLEAN_FLAG" == "true" ]]; then
+        log_info "기존 컨테이너 및 볼륨을 정리합니다..."
+        
+        local compose_file=$(get_compose_file)
+        
+        if docker-compose -f "$compose_file" ps -q | grep -q .; then
+            docker-compose -f "$compose_file" down -v
+            log_success "기존 컨테이너 및 볼륨이 정리되었습니다."
+        else
+            log_info "정리할 컨테이너가 없습니다."
+        fi
+    fi
+}
+
+# 환경별 환경 변수 파일 설정
+setup_env_files_by_environment() {
+    log_info "환경별 환경 변수 파일을 설정합니다..."
+    
+    case $ENV in
+        "local")
+            # 로컬 환경용 .env 파일 복사
+            if [ ! -f "CoE-Backend/.env" ]; then
+                if [ -f "CoE-Backend/.env.local" ]; then
+                    cp CoE-Backend/.env.local CoE-Backend/.env
+                    log_success "CoE-Backend/.env.local을 .env로 복사했습니다."
+                else
+                    cp CoE-Backend/.env.example CoE-Backend/.env
+                    log_warning "CoE-Backend/.env.example을 .env로 복사했습니다. 설정을 확인해주세요."
+                fi
+            fi
+            
+            if [ ! -f "CoE-RagPipeline/.env" ]; then
+                if [ -f "CoE-RagPipeline/.env.local" ]; then
+                    cp CoE-RagPipeline/.env.local CoE-RagPipeline/.env
+                    log_success "CoE-RagPipeline/.env.local을 .env로 복사했습니다."
+                else
+                    cp CoE-RagPipeline/.env.example CoE-RagPipeline/.env
+                    log_warning "CoE-RagPipeline/.env.example을 .env로 복사했습니다. 설정을 확인해주세요."
+                fi
+            fi
+            ;;
+        "full")
+            # Docker 환경용 .env 파일 확인
+            if [ ! -f "CoE-Backend/.env.docker" ]; then
+                cp CoE-Backend/.env.example CoE-Backend/.env.docker
+                log_warning "CoE-Backend/.env.docker 파일을 생성했습니다. 설정을 확인해주세요."
+            fi
+            
+            if [ ! -f "CoE-RagPipeline/.env.docker" ]; then
+                cp CoE-RagPipeline/.env.example CoE-RagPipeline/.env.docker
+                log_warning "CoE-RagPipeline/.env.docker 파일을 생성했습니다. 설정을 확인해주세요."
+            fi
+            ;;
+    esac
+}
+
+# Docker Compose 서비스 시작
+start_services() {
+    log_info "Docker Compose로 서비스를 시작합니다..."
+    
+    local compose_file=$(get_compose_file)
+    local services=$(get_services)
+    
+    log_info "사용할 Compose 파일: $compose_file"
+    log_info "실행할 서비스: ${services:-'모든 서비스'}"
+    
+    if ! docker-compose -f "$compose_file" up -d $BUILD_FLAG $services; then
+        log_error "Docker Compose 실행에 실패했습니다."
+        exit 1
+    fi
+    
+    log_success "서비스가 시작되었습니다."
+}
+
+# 로컬 환경 안내
+show_local_instructions() {
+    if [[ "$ENV" == "local" ]]; then
+        echo ""
+        log_info "🔧 로컬 개발 환경 설정 안내:"
+        echo ""
+        
+        if [[ "$MODE" == "all" || "$MODE" == "backend" ]]; then
+            echo "📦 CoE-Backend 로컬 실행:"
+            echo "   cd CoE-Backend"
+            echo "   python -m venv .venv"
+            echo "   source .venv/bin/activate  # Windows: .venv\\Scripts\\activate"
+            echo "   pip install -r requirements.txt"
+            echo "   python main.py"
+            echo ""
+        fi
+        
+        if [[ "$MODE" == "all" || "$MODE" == "pipeline" ]]; then
+            echo "📦 CoE-RagPipeline 로컬 실행:"
+            echo "   cd CoE-RagPipeline"
+            echo "   python -m venv .venv"
+            echo "   source .venv/bin/activate  # Windows: .venv\\Scripts\\activate"
+            echo "   pip install -r requirements.txt"
+            echo "   python main.py"
+            echo ""
+        fi
+    fi
+}
+
+# 서비스 상태 확인 (환경별)
+check_services() {
+    log_info "서비스 상태를 확인합니다..."
+    
+    local compose_file=$(get_compose_file)
+    
+    # 기본 대기 시간
+    sleep 5
+    
+    # ChromaDB 헬스체크
+    if docker-compose -f "$compose_file" ps | grep -q chroma; then
+        wait_for_service "ChromaDB" "http://localhost:6666/api/v1/heartbeat" || true
+    fi
+    
+    # MariaDB와 Redis 헬스체크
+    if docker-compose -f "$compose_file" ps | grep -q mariadb; then
+        log_info "MariaDB 헬스체크를 확인합니다..."
+        for i in {1..30}; do
+            local mariadb_health=$(docker inspect --format='{{.State.Health.Status}}' mariadb-* 2>/dev/null | head -1 || echo "none")
+            if [[ "$mariadb_health" == "healthy" ]]; then
+                log_success "MariaDB가 준비되었습니다."
+                break
+            fi
+            if [ $i -eq 30 ]; then
+                log_warning "MariaDB 헬스체크가 완료되지 않았습니다."
+            fi
+            sleep 2
+        done
+    fi
+    
+    if docker-compose -f "$compose_file" ps | grep -q redis; then
+        log_info "Redis 헬스체크를 확인합니다..."
+        for i in {1..30}; do
+            local redis_health=$(docker inspect --format='{{.State.Health.Status}}' redis-* 2>/dev/null | head -1 || echo "none")
+            if [[ "$redis_health" == "healthy" ]]; then
+                log_success "Redis가 준비되었습니다."
+                break
+            fi
+            if [ $i -eq 30 ]; then
+                log_warning "Redis 헬스체크가 완료되지 않았습니다."
+            fi
+            sleep 2
+        done
+    fi
+    
+    # 애플리케이션 서비스 확인 (full 환경에서만)
+    if [[ "$ENV" == "full" ]]; then
+        if docker-compose -f "$compose_file" ps | grep -q coe-backend; then
+            wait_for_service "CoE-Backend" "http://localhost:8000/health" || true
+        fi
+        
+        if docker-compose -f "$compose_file" ps | grep -q coe-rag-pipeline; then
+            wait_for_service "CoE-RagPipeline" "http://localhost:8001/health" || true
+        fi
+    fi
+    
+    echo ""
+    log_info "최종 서비스 상태:"
+    docker-compose -f "$compose_file" ps
+}
+
 # 메인 실행 함수
 main() {
     echo "🚀 CoE 시스템을 시작합니다..."
     echo ""
     
+    parse_arguments "$@"
     check_docker
     check_ports
-    setup_env_files
+    clean_containers
+    setup_env_files_by_environment
     create_directories
     start_services
     check_services
+    show_local_instructions
     
     echo ""
     log_success "CoE 시스템이 성공적으로 시작되었습니다!"
@@ -229,15 +513,15 @@ main() {
     echo "   - CoE-RagPipeline (분석 엔진): http://localhost:8001"
     echo "   - ChromaDB: http://localhost:6666"
     echo "   - MariaDB: localhost:6667"
-
     echo "   - Redis: localhost:6669"
     echo ""
     echo "📝 유용한 명령어:"
-    echo "   - 로그 확인: docker-compose logs -f"
-    echo "   - 특정 서비스 로그: docker-compose logs -f [서비스명]"
-    echo "   - 서비스 상태: docker-compose ps"
-    echo "   - 시스템 중지: docker-compose down"
-    echo "   - 완전 정리: docker-compose down -v"
+    local compose_file=$(get_compose_file)
+    echo "   - 로그 확인: docker-compose -f $compose_file logs -f"
+    echo "   - 특정 서비스 로그: docker-compose -f $compose_file logs -f [서비스명]"
+    echo "   - 서비스 상태: docker-compose -f $compose_file ps"
+    echo "   - 시스템 중지: docker-compose -f $compose_file down"
+    echo "   - 완전 정리: docker-compose -f $compose_file down -v"
     echo ""
 }
 

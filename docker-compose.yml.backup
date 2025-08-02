@@ -1,10 +1,8 @@
-# Docker Compose for Full Docker Deployment
-# 전체 Docker 배포 환경용 - 모든 서비스를 Docker 컨테이너로 실행
 services:
   # 인프라 서비스들
   chroma:
     image: chromadb/chroma:latest
-    container_name: chroma-full
+    container_name: chroma
     ports:
       - "6666:8000"
     volumes:
@@ -12,16 +10,11 @@ services:
     environment:
       - IS_PERSISTENT=TRUE
     networks:
-      - coe-full-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      - coe-network
 
   mariadb:
     image: mariadb:latest
-    container_name: mariadb-full
+    container_name: mariadb
     ports:
       - "6667:3306"
     environment:
@@ -34,7 +27,7 @@ services:
       - ./db/init:/docker-entrypoint-initdb.d
     restart: always
     networks:
-      - coe-full-network
+      - coe-network
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       start_period: 10s
@@ -44,7 +37,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: redis-full
+    container_name: redis
     ports:
       - "6669:6379"
     volumes:
@@ -52,67 +45,54 @@ services:
     restart: always
     command: redis-server --appendonly yes --requirepass coe_redis_password
     networks:
-      - coe-full-network
+      - coe-network
     healthcheck:
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
       interval: 30s
       timeout: 10s
       retries: 3
 
+
+
   # 애플리케이션 서비스들
   coe-backend:
     build:
       context: ./CoE-Backend
       dockerfile: Dockerfile
-    container_name: coe-backend-full
+    container_name: coe-backend
     ports:
       - "8000:8000"
     env_file:
-      - ./CoE-Backend/.env.docker
+      - ./CoE-Backend/.env
     volumes:
       - ./CoE-Backend/flows:/app/flows
     depends_on:
-      chroma:
-        condition: service_healthy
-      mariadb:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - chroma
+      - mariadb
+      - redis
     restart: always
     networks:
-      - coe-full-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      - coe-network
 
   coe-rag-pipeline:
     build:
       context: ./CoE-RagPipeline
       dockerfile: Dockerfile
-    container_name: coe-rag-pipeline-full
+    container_name: coe-rag-pipeline
     ports:
       - "8001:8001"
     env_file:
-      - ./CoE-RagPipeline/.env.docker
+      - ./CoE-RagPipeline/.env
     volumes:
       - ./CoE-RagPipeline/output:/app/output
       - ./CoE-RagPipeline/chroma_db:/app/chroma_db
     depends_on:
-      chroma:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - chroma
+      - redis
     restart: always
     networks:
-      - coe-full-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      - coe-network
 
 networks:
-  coe-full-network:
+  coe-network:
     driver: bridge

@@ -206,18 +206,70 @@ ANALYSIS_TIMEOUT_MINUTES=30
 cd ..
 ```
 
-### 3. Docker Compose를 사용하여 전체 시스템 실행 (권장)
+### 3. 다양한 실행 환경 옵션
 
-**간편 실행 스크립트 사용:**
+CoE 시스템은 개발 및 배포 환경에 맞춰 다양한 실행 옵션을 제공합니다.
+
+#### 🚀 통합 실행 스크립트 (권장)
+
+**전체 시스템 실행:**
 ```bash
-# 전체 시스템 시작 (자동으로 환경 설정 및 디렉토리 생성)
+# 전체 Docker 환경으로 모든 서비스 실행 (기본값)
 ./run_all.sh
 
-# 전체 시스템 중지
-./stop_all.sh
+# 로컬 개발 환경으로 인프라만 Docker 실행
+./run_all.sh local
+
+# 인프라 서비스만 실행
+./run_all.sh full infra
+
+# 기존 컨테이너 정리 후 실행
+./run_all.sh full all --clean
+
+# 이미지 재빌드 후 실행
+./run_all.sh full all --build
+
+# 도움말 확인
+./run_all.sh --help
 ```
 
-**수동 Docker Compose 명령어:**
+#### 🔧 개별 서비스 실행
+
+**CoE-Backend 개별 실행:**
+```bash
+# 로컬 개발 환경 (인프라는 Docker, 앱은 로컬)
+./run_backend.sh local
+
+# 완전 Docker 환경
+./run_backend.sh docker
+
+# 도움말 확인
+./run_backend.sh --help
+```
+
+**CoE-RagPipeline 개별 실행:**
+```bash
+# 로컬 개발 환경 (인프라는 Docker, 앱은 로컬)
+./run_pipeline.sh local
+
+# 완전 Docker 환경
+./run_pipeline.sh docker
+
+# 도움말 확인
+./run_pipeline.sh --help
+```
+
+#### 📋 환경별 특징
+
+| 환경 | 설명 | 인프라 | 애플리케이션 | 용도 |
+|------|------|--------|-------------|------|
+| **full** | 전체 Docker 환경 | Docker | Docker | 배포, 통합 테스트 |
+| **local** | 로컬 개발 환경 | Docker | 로컬 Python | 개발, 디버깅 |
+| **native** | 완전 로컬 환경 | 로컬 설치 | 로컬 Python | 네이티브 개발 |
+
+#### 🐳 수동 Docker Compose 명령어
+
+**전체 Docker 환경:**
 ```bash
 # 모든 서비스 빌드 및 실행
 docker-compose up -d --build
@@ -234,6 +286,26 @@ docker-compose down
 
 # 볼륨까지 삭제하여 완전 정리
 docker-compose down -v
+```
+
+**로컬 개발 환경:**
+```bash
+# 인프라 서비스만 실행
+docker-compose -f docker-compose.local.yml up -d
+
+# 인프라 서비스 중지
+docker-compose -f docker-compose.local.yml down
+```
+
+#### 🔄 시스템 중지
+
+```bash
+# 전체 시스템 중지
+./stop_all.sh
+
+# 또는 수동으로
+docker-compose down
+docker-compose -f docker-compose.local.yml down
 ```
 
 **실행되는 서비스들:**
@@ -260,26 +332,86 @@ docker-compose logs -f coe-backend
 docker-compose logs -f coe-rag-pipeline
 ```
 
-### 4. 개별 서비스 Docker 실행
+### 4. 환경 변수 설정
 
-필요한 경우 개별 서비스만 실행할 수 있습니다:
+각 환경에 맞는 환경 변수 파일이 자동으로 설정됩니다:
 
-**인프라 서비스만 실행:**
+#### 🔧 환경별 .env 파일
+
+| 환경 | CoE-Backend | CoE-RagPipeline | 설명 |
+|------|-------------|-----------------|------|
+| **local** | `.env.local` → `.env` | `.env.local` → `.env` | 로컬 개발용 (localhost 연결) |
+| **docker** | `.env.docker` | `.env.docker` | Docker 네트워크용 (컨테이너명 연결) |
+| **native** | `.env.example` → `.env` | `.env.example` → `.env` | 완전 로컬용 (수동 설정 필요) |
+
+#### ⚙️ 주요 설정 차이점
+
+**로컬 개발 환경 (.env.local):**
 ```bash
-docker-compose up -d chroma mariadb redis
+# 인프라 서비스는 Docker 컨테이너에 연결
+DB_HOST=localhost
+DB_PORT=6667
+CHROMA_HOST=localhost
+CHROMA_PORT=6666
+REDIS_HOST=localhost
+REDIS_PORT=6669
 ```
 
-**애플리케이션 서비스만 실행:**
+**Docker 환경 (.env.docker):**
 ```bash
-docker-compose up -d coe-backend coe-rag-pipeline
+# 모든 서비스가 Docker 네트워크에서 연결
+DB_HOST=mariadb-full
+DB_PORT=3306
+CHROMA_HOST=chroma-full
+CHROMA_PORT=8000
+REDIS_HOST=redis-full
+REDIS_PORT=6379
 ```
 
-### 5. 로컬에서 직접 실행
+### 5. 로컬 개발 가이드
 
-각 프로젝트의 `README.md` 파일을 참고하여 가상 환경 설정 및 서버를 실행할 수 있습니다.
+로컬 개발 환경에서는 인프라는 Docker로, 애플리케이션은 로컬 Python으로 실행합니다.
 
-- **CoE-RagPipeline 시작 가이드**: `CoE-RagPipeline/README.md`
-- **CoE-Backend 시작 가이드**: `CoE-Backend/README.md`
+#### 📦 CoE-Backend 로컬 개발
+
+```bash
+# 1. 인프라 서비스 시작
+./run_backend.sh local
+
+# 또는 수동으로
+docker-compose -f docker-compose.local.yml up -d chroma mariadb redis
+
+# 2. 별도 터미널에서 Backend 실행
+cd CoE-Backend
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+python main.py
+```
+
+#### 📦 CoE-RagPipeline 로컬 개발
+
+```bash
+# 1. 인프라 서비스 시작
+./run_pipeline.sh local
+
+# 또는 수동으로
+docker-compose -f docker-compose.local.yml up -d chroma redis
+
+# 2. 별도 터미널에서 Pipeline 실행
+cd CoE-RagPipeline
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+python main.py
+```
+
+#### 🔍 개발 환경 장점
+
+- **빠른 재시작**: 코드 변경 시 Python 프로세스만 재시작
+- **디버깅 용이**: IDE에서 직접 디버깅 가능
+- **로그 확인**: 콘솔에서 직접 로그 확인
+- **핫 리로딩**: 코드 변경 시 자동 재시작 (개발 모드)
 
 ## 📚 Swagger UI로 API 테스트하기
 
