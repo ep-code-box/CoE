@@ -360,11 +360,11 @@ REDIS_PORT=6669
 **Docker 환경 (.env.docker):**
 ```bash
 # 모든 서비스가 Docker 네트워크에서 연결
-DB_HOST=mariadb-full
+DB_HOST=mariadb
 DB_PORT=3306
-CHROMA_HOST=chroma-full
+CHROMA_HOST=chroma
 CHROMA_PORT=8000
-REDIS_HOST=redis-full
+REDIS_HOST=redis
 REDIS_PORT=6379
 ```
 

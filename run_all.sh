@@ -179,7 +179,7 @@ check_services() {
     sleep 5
     
     # 각 서비스 헬스체크
-    wait_for_service "ChromaDB" "http://localhost:6666/api/v1/heartbeat"
+    wait_for_service "ChromaDB" "http://localhost:6666/api/v2/heartbeat"
 
     
     # MariaDB와 Redis는 헬스체크가 docker-compose.yml에 정의되어 있음
@@ -440,7 +440,7 @@ check_services() {
     
     # ChromaDB 헬스체크
     if docker-compose -f "$compose_file" ps | grep -q chroma; then
-        wait_for_service "ChromaDB" "http://localhost:6666/api/v1/heartbeat" || true
+        wait_for_service "ChromaDB" "http://localhost:6666/api/v2/heartbeat" || true
     fi
     
     # MariaDB와 Redis 헬스체크
