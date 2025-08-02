@@ -104,6 +104,7 @@ services:
       - ./CoE-RagPipeline/chroma_db:/app/chroma_db
     depends_on:
       - chroma
+      - mariadb
       - redis
     restart: always
     networks:
