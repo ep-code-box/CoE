@@ -281,6 +281,22 @@ docker-compose up -d coe-backend coe-rag-pipeline
 - **CoE-RagPipeline 시작 가이드**: `CoE-RagPipeline/README.md`
 - **CoE-Backend 시작 가이드**: `CoE-Backend/README.md`
 
+## 📚 Swagger UI로 API 테스트하기
+
+CoE 프로젝트의 모든 API는 **Swagger UI**를 통해 쉽게 테스트할 수 있습니다!
+
+### 🔗 Swagger UI 접근
+- **CoE-Backend**: http://localhost:8000/docs
+- **CoE-RagPipeline**: http://localhost:8001/docs
+
+### 🎯 주요 기능 테스트
+1. **AI 채팅**: `/v1/chat/completions`에서 CoE 에이전트와 대화
+2. **Git 분석**: `/api/v1/analyze`로 레포지토리 분석 시작
+3. **벡터 검색**: `/api/v1/search`로 코드/문서 검색
+4. **코딩 어시스턴트**: `/api/coding-assistant/`로 코드 생성/분석
+
+자세한 사용법은 [Swagger UI 가이드](docs/SWAGGER_GUIDE.md)를 참고하세요.
+
 ## 📖 사용 예시: 개발 가이드 추출하기
 
 ### 🔍 1단계: Git 레포지토리 분석

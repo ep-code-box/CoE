@@ -1,3 +1,4 @@
 db/chroma/
 db/maria/
 db/redis
+.DS_Store
