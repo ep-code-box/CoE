@@ -118,7 +118,6 @@ create_directories() {
     local directories=(
         "db/chroma"
         "db/maria" 
-        "db/koEmbeddings"
         "db/redis"
         "CoE-Backend/flows"
         "CoE-RagPipeline/output"
@@ -177,13 +176,13 @@ check_services() {
     
     # 각 서비스 헬스체크
     wait_for_service "ChromaDB" "http://localhost:6666/api/v1/heartbeat"
-    wait_for_service "Korean Embeddings" "http://localhost:6668/health"
+
     
     # MariaDB와 Redis는 헬스체크가 docker-compose.yml에 정의되어 있음
     log_info "MariaDB와 Redis 헬스체크를 확인합니다..."
     
     local healthy_services=0
-    local total_services=6
+    local total_services=5
     
     for i in {1..30}; do
         local mariadb_health=$(docker inspect --format='{{.State.Health.Status}}' mariadb 2>/dev/null || echo "none")
@@ -230,7 +229,7 @@ main() {
     echo "   - CoE-RagPipeline (분석 엔진): http://localhost:8001"
     echo "   - ChromaDB: http://localhost:6666"
     echo "   - MariaDB: localhost:6667"
-    echo "   - Korean Embeddings: http://localhost:6668"
+
     echo "   - Redis: localhost:6669"
     echo ""
     echo "📝 유용한 명령어:"

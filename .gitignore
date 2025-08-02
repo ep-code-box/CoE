@@ -1,4 +1,3 @@
 db/chroma/
 db/maria/
-db/koEmbeddings/
 db/redis

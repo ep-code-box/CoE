@@ -6,27 +6,35 @@
 
 1.  **`CoE-Backend`**: LangGraph 기반 AI 에이전트 및 FastAPI 서버 (포트 8000)
 2.  **`CoE-RagPipeline`**: Git 분석 및 RAG 파이프라인 엔진 (포트 8001)
-3.  **인프라 서비스**: ChromaDB, MariaDB, Korean Embeddings, Redis
+3.  **인프라 서비스**: ChromaDB, MariaDB, Redis
 
 ## ✨ 주요 기능
 
 ### 🔍 코드 분석 및 처리
 - **자동 Git 분석**: 레포지토리 클론, AST 분석, 기술 스택 감지, 의존성 분석
+- **레포지토리간 연관관계 분석**: 공통 의존성, 코드 패턴, API 호출 관계, 개발자 협업 네트워크 분석
 - **다중 언어 지원**: Python, JavaScript, TypeScript, Java, C++, C#, Go, Rust, Kotlin, Swift (10개 언어)
 - **벡터 검색**: ChromaDB 기반 고성능 벡터 검색 및 RAG 시스템
-- **실시간 임베딩**: 한국어 특화 임베딩 모델 지원
+- **실시간 임베딩**: OpenAI 임베딩 모델 지원
 
 ### 🤖 AI 에이전트 및 도구
-- **LangGraph 에이전트**: 동적 도구 라우팅 및 자동 도구 등록 시스템
+- **LangGraph 에이전트**: AI4X 모델(Claude-3-Sonnet) 기반 동적 도구 라우팅 및 자동 도구 등록 시스템
+- **지능형 도구 선택**: 의미적 유사성 기반 도구 선택 및 코사인 유사도 최적화
 - **코딩 어시스턴트**: 코드 생성, 리팩토링, 리뷰, 테스트 생성 (10개 언어 지원)
-- **가이드 생성**: 표준 개발 가이드, 공통 코드화 가이드, 공통 함수 가이드 자동 생성
+- **가이드 생성**: LLM 기반 표준 개발 가이드, 공통 코드화 가이드, 공통 함수 가이드 자동 생성
 - **OpenWebUI 호환**: 표준 OpenAI API 규격 지원
+
+### 🔐 사용자 관리 및 보안
+- **JWT 기반 인증**: FastAPI-Users를 활용한 안전한 사용자 인증 및 세션 관리
+- **3턴 멀티턴 대화**: 사용자별 대화 세션 관리 및 자동 요약 기능
+- **권한 기반 접근 제어**: 역할별 권한 관리 (admin, user, developer)
+- **대화 히스토리 관리**: 모든 채팅 메시지 데이터베이스 저장 및 컨텍스트 유지
 
 ### 🔧 통합 및 확장성
 - **모듈형 아키텍처**: 도구 레지스트리 패턴으로 코드 수정 없이 기능 확장
 - **LangFlow 연동**: 워크플로우 저장 및 관리 API
-- **다중 LLM 지원**: OpenAI, Anthropic 등 다양한 LLM 제공업체 지원
-- **완전한 Docker 지원**: 5개 서비스 통합 Docker Compose 환경
+- **다중 LLM 지원**: OpenAI, Anthropic, SKAX(AI4X) 등 다양한 LLM 제공업체 지원
+- **완전한 Docker 지원**: 5개 서비스 통합 Docker Compose 환경 (ChromaDB, MariaDB, Redis 포함)
 
 ## 🏗️ 시스템 아키텍처
 
@@ -59,20 +67,22 @@ CoE 플랫폼은 마이크로서비스 아키텍처로 설계되어 각 서비�
 │  └─────────────────────────────────────────────────────────────────────────────────┘ │
 ├─────────────────────────────────────────────────────────────────────────────────────┤
 │  Infrastructure Layer                                                              │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  ┌───────────────┐  │
-│  │   ChromaDB      │  │    MariaDB      │  │  Korean Embed   │  │     Redis     │  │
-│  │  (Vector DB)    │  │  (Relational)   │  │   (Port 6668)   │  │  (Cache/Sess) │  │
-│  │  (Port 6666)    │  │  (Port 6667)    │  │                 │  │  (Port 6669)  │  │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘  └───────────────┘  │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌───────────────┐                    │
+│  │   ChromaDB      │  │    MariaDB      │  │     Redis     │                    │
+│  │  (Vector DB)    │  │  (Relational)   │  │  (Cache/Sess) │                    │
+│  │  (Port 6666)    │  │  (Port 6667)    │  │  (Port 6669)  │                    │
+│  └─────────────────┘  └─────────────────┘  └───────────────┘                    │
 └─────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### 🔄 워크플로우
 1. **분석 요청**: 사용자가 Git 레포지토리 분석을 CoE-RagPipeline에 요청
-2. **코드 분석**: AST 분석, 기술 스택 감지, 의존성 분석 수행
-3. **벡터화**: 분석 결과를 임베딩하여 ChromaDB에 저장
-4. **가이드 생성**: CoE-Backend가 분석 결과를 기반으로 AI 가이드 생성
-5. **결과 제공**: 표준 개발 가이드, 공통 코드화 가이드 등을 사용자에게 제공
+2. **코드 분석**: AST 분석, 기술 스택 감지, 의존성 분석, 레포지토리간 연관관계 추출 수행
+3. **문서 수집**: README, doc 폴더, 참조 URL에서 개발 문서 자동 수집
+4. **벡터화**: 분석 결과 및 문서를 임베딩하여 ChromaDB에 저장
+5. **가이드 생성**: CoE-Backend가 분석 결과를 기반으로 LLM을 통해 AI 가이드 생성
+6. **결과 제공**: 표준 개발 가이드, 공통 코드화 가이드, 재활용 함수 가이드를 사용자에게 제공
+7. **대화형 상호작용**: OpenWebUI를 통해 생성된 가이드에 대한 질의응답 및 추가 분석
 
 ## 📂 프로젝트 구조
 
@@ -123,7 +133,16 @@ cp .env.example .env
 
 `.env` 파일을 편집하여 다음 값들을 설정하세요:
 ```bash
-# LLM API 설정
+# === API 키 사용 정책 ===
+# SKAX_API_KEY: ax4 모델(sktax provider) 전용
+# OPENAI_API_KEY: OpenAI 서비스(임베딩, GPT 모델 등) 전용
+
+# SKAX API 설정 (ax4 모델 전용)
+SKAX_API_BASE=https://guest-api.sktax.chat/v1
+SKAX_API_KEY=your_skax_api_key_here
+SKAX_MODEL_NAME=ax4
+
+# OpenAI API 설정 (임베딩 및 OpenAI 모델 전용)
 OPENAI_API_KEY=your_openai_api_key_here
 ANTHROPIC_API_KEY=your_anthropic_api_key_here  # 선택사항
 
@@ -134,8 +153,8 @@ DATABASE_URL=mysql://coe_user:coe_password@mariadb:3306/coe_db
 CHROMA_HOST=chroma
 CHROMA_PORT=6666
 
-# 임베딩 서비스 설정
-EMBEDDING_SERVICE_URL=http://koEmbeddings:6668
+# 임베딩 서비스 설정 (OpenAI 사용)
+# EMBEDDING_SERVICE_URL은 더 이상 사용하지 않음 - OpenAI API 직접 사용
 
 # Redis 설정
 REDIS_HOST=redis
@@ -151,6 +170,18 @@ cp .env.example .env
 
 `.env` 파일을 편집하여 다음 값들을 설정하세요:
 ```bash
+# === API 키 사용 정책 ===
+# SKAX_API_KEY: ax4 모델(sktax provider) 전용
+# OPENAI_API_KEY: OpenAI 서비스(임베딩, GPT 모델 등) 전용
+
+# SKAX API 설정 (ax4 모델 전용)
+SKAX_API_BASE=https://guest-api.sktax.chat/v1
+SKAX_API_KEY=your_skax_api_key_here
+SKAX_MODEL_NAME=ax4
+
+# OpenAI API 설정 (임베딩 및 OpenAI 모델 전용)
+OPENAI_API_KEY=your_openai_api_key_here
+
 # 데이터베이스 설정
 DATABASE_URL=mysql://coe_user:coe_password@mariadb:3306/coe_db
 
@@ -158,8 +189,8 @@ DATABASE_URL=mysql://coe_user:coe_password@mariadb:3306/coe_db
 CHROMA_HOST=chroma
 CHROMA_PORT=6666
 
-# 임베딩 서비스 설정
-EMBEDDING_SERVICE_URL=http://koEmbeddings:6668
+# 임베딩 서비스 설정 (OpenAI 사용)
+# EMBEDDING_SERVICE_URL은 더 이상 사용하지 않음 - OpenAI API 직접 사용
 
 # Redis 설정
 REDIS_HOST=redis
@@ -207,11 +238,10 @@ docker-compose down -v
 
 **실행되는 서비스들:**
 - **ChromaDB**: 벡터 데이터베이스 (포트 6666)
-- **MariaDB**: 관계형 데이터베이스 (포트 6667)  
-- **Korean Embeddings**: 한국어 임베딩 서비스 (포트 6668)
-- **Redis**: 캐싱 및 세션 관리 (포트 6669)
-- **CoE-Backend**: AI 에이전트 및 API 서버 (포트 8000)
-- **CoE-RagPipeline**: Git 분석 및 RAG 파이프라인 (포트 8001)
+- **MariaDB**: 관계형 데이터베이스 - 사용자 관리, 세션, 분석 결과 저장 (포트 6667)  
+- **Redis**: 캐싱 및 세션 관리 - JWT 토큰, 임베딩 캐시 (포트 6669)
+- **CoE-Backend**: AI 에이전트 및 API 서버 - LangGraph, 인증, 도구 라우팅 (포트 8000)
+- **CoE-RagPipeline**: Git 분석 및 RAG 파이프라인 - 코드 분석, 연관관계 추출, 가이드 생성 (포트 8001)
 
 ### 📊 시스템 상태 확인
 
@@ -236,7 +266,7 @@ docker-compose logs -f coe-rag-pipeline
 
 **인프라 서비스만 실행:**
 ```bash
-docker-compose up -d chroma mariadb koEmbeddings redis
+docker-compose up -d chroma mariadb redis
 ```
 
 **애플리케이션 서비스만 실행:**
@@ -256,13 +286,21 @@ docker-compose up -d coe-backend coe-rag-pipeline
 ### 🔍 1단계: Git 레포지토리 분석
 
 ```bash
-# CoE-RagPipeline에 분석 요청
+# CoE-RagPipeline에 분석 요청 (CoE 프로젝트 레포지토리들)
 curl -X POST "http://localhost:8001/api/v1/analyze" \
   -H "Content-Type: application/json" \
   -d '{
     "repositories": [
       {
-        "url": "https://github.com/your-org/your-repo.git",
+        "url": "https://github.com/ep-code-box/CoE.git",
+        "branch": "main"
+      },
+      {
+        "url": "https://github.com/ep-code-box/CoE-RagPipeline.git",
+        "branch": "main"
+      },
+      {
+        "url": "https://github.com/ep-code-box/CoE-Backend.git",
         "branch": "main"
       }
     ],
@@ -278,15 +316,24 @@ curl -X POST "http://localhost:8001/api/v1/analyze" \
 ### 🤖 2단계: AI 가이드 생성
 
 ```bash
-# CoE-Backend에 가이드 생성 요청
+# CoE-RagPipeline에서 직접 가이드 생성
+curl -X POST "http://localhost:8001/api/v1/generate/guide" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "analysis_id": "3cbf3db0-fd9e-410c-bdaa-30cdeb9d7d6c",
+    "guide_types": ["dev_guide", "common_code", "reusable_functions"]
+  }'
+
+# 또는 CoE-Backend AI 에이전트를 통한 대화형 가이드 생성
 curl -X POST "http://localhost:8000/v1/chat/completions" \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{
     "model": "coe-agent-v1",
     "messages": [
       {
         "role": "user",
-        "content": "analysis_id 3cbf3db0-fd9e-410c-bdaa-30cdeb9d7d6c로 개발 가이드를 추출해줘"
+        "content": "analysis_id 3cbf3db0-fd9e-410c-bdaa-30cdeb9d7d6c로 개발 가이드를 추출해줘. 특히 공통 함수와 재활용 가능한 코드에 집중해주세요."
       }
     ]
   }'

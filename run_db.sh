@@ -3,7 +3,7 @@
 # DB와 임베딩 모델만 실행하는 스크립트
 # - chroma: 벡터 데이터베이스 (포트 6666)
 # - mariadb: 관계형 데이터베이스 (포트 6667)  
-# - koEmbeddings: 한국어 임베딩 서비스 (포트 6668)
+
 # - redis: 캐싱 및 세션 관리 (포트 6669)
 
 set -e  # 에러 발생 시 스크립트 중단
@@ -88,7 +88,6 @@ create_directories() {
     local directories=(
         "db/chroma"
         "db/maria" 
-        "db/koEmbeddings"
         "db/redis"
     )
     
@@ -128,7 +127,7 @@ start_services() {
     log_info "DB와 임베딩 서비스를 시작합니다..."
     
     # 서비스 시작 순서 고려 (의존성 순서)
-    local services=("chroma" "mariadb" "koEmbeddings" "redis")
+    local services=("chroma" "mariadb" "redis")
     
     if ! docker-compose up -d "${services[@]}"; then
         log_error "Docker Compose 실행에 실패했습니다."
@@ -147,7 +146,6 @@ check_services() {
     
     # 각 서비스 헬스체크
     wait_for_service "ChromaDB" "http://localhost:6666/api/v1/heartbeat"
-    wait_for_service "Korean Embeddings" "http://localhost:6668/health"
     
     # MariaDB와 Redis는 헬스체크가 docker-compose.yml에 정의되어 있음
     log_info "MariaDB와 Redis 헬스체크를 확인합니다..."
@@ -172,7 +170,7 @@ check_services() {
     
     echo ""
     log_info "최종 서비스 상태:"
-    docker-compose ps chroma mariadb koEmbeddings redis
+    docker-compose ps chroma mariadb redis
 }
 
 # 메인 실행 함수
@@ -192,14 +190,13 @@ main() {
     echo "📍 서비스 접속 정보:"
     echo "   - ChromaDB: http://localhost:6666"
     echo "   - MariaDB: localhost:6667"
-    echo "   - Korean Embeddings: http://localhost:6668"
     echo "   - Redis: localhost:6669"
     echo ""
     echo "📝 유용한 명령어:"
-    echo "   - 로그 확인: docker-compose logs -f chroma mariadb koEmbeddings redis"
+    echo "   - 로그 확인: docker-compose logs -f chroma mariadb redis"
     echo "   - 특정 서비스 로그: docker-compose logs -f [서비스명]"
-    echo "   - 서비스 상태: docker-compose ps chroma mariadb koEmbeddings redis"
-    echo "   - 서비스 중지: docker-compose stop chroma mariadb koEmbeddings redis"
+    echo "   - 서비스 상태: docker-compose ps chroma mariadb redis"
+    echo "   - 서비스 중지: docker-compose stop chroma mariadb redis"
     echo "   - 완전 정리: docker-compose down -v"
     echo ""
     echo "💡 팁: 애플리케이션 서비스를 시작하려면 './run_all.sh'를 실행하세요."
