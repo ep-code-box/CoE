@@ -11,17 +11,21 @@
 ## ✨ 주요 기능
 
 ### 🔍 코드 분석 및 처리
-- **자동 Git 분석**: 레포지토리 클론, AST 분석, 기술 스택 감지, 의존성 분석
+- **스마트 Git 분석**: 레포지토리 클론, AST 분석, 기술 스택 감지, 의존성 분석
+- **Commit 기반 변경 감지**: 동일 commit은 기존 결과 재사용, 변경 시에만 새로운 분석 수행으로 효율성 극대화 ⭐ **NEW**
 - **레포지토리간 연관관계 분석**: 공통 의존성, 코드 패턴, API 호출 관계, 개발자 협업 네트워크 분석
 - **다중 언어 지원**: Python, JavaScript, TypeScript, Java, C++, C#, Go, Rust, Kotlin, Swift (10개 언어)
 - **벡터 검색**: ChromaDB 기반 고성능 벡터 검색 및 RAG 시스템
+- **분석별 RAG 검색**: analysis_id 기반으로 특정 분석 결과만 검색하여 정확도 향상 ⭐ **NEW**
 - **실시간 임베딩**: OpenAI 임베딩 모델 지원
 
 ### 🤖 AI 에이전트 및 도구
-- **LangGraph 에이전트**: AI4X 모델(Claude-3-Sonnet) 기반 동적 도구 라우팅 및 자동 도구 등록 시스템
+- **LangGraph 에이전트**: SKAX 모델(Claude-3-Sonnet) 기반 동적 도구 라우팅 및 자동 도구 등록 시스템
 - **지능형 도구 선택**: 의미적 유사성 기반 도구 선택 및 코사인 유사도 최적화
 - **코딩 어시스턴트**: 코드 생성, 리팩토링, 리뷰, 테스트 생성 (10개 언어 지원)
-- **가이드 생성**: LLM 기반 표준 개발 가이드, 공통 코드화 가이드, 공통 함수 가이드 자동 생성
+- **LLM 기반 문서 자동 생성**: 분석 결과를 바탕으로 7가지 타입의 개발 문서 자동 생성 ⭐ **NEW**
+  - 개발 가이드, API 문서, 아키텍처 개요, 코드 리뷰 요약, 기술 명세서, 배포 가이드, 문제 해결 가이드
+- **마크다운 리포트 자동 생성**: 분석 완료 시 상세한 마크다운 형식의 분석 리포트 자동 생성 ⭐ **NEW**
 - **OpenWebUI 호환**: 표준 OpenAI API 규격 지원
 
 ### 🔐 사용자 관리 및 보안
@@ -33,7 +37,8 @@
 ### 🔧 통합 및 확장성
 - **모듈형 아키텍처**: 도구 레지스트리 패턴으로 코드 수정 없이 기능 확장
 - **LangFlow 연동**: 워크플로우 저장 및 관리 API
-- **다중 LLM 지원**: OpenAI, Anthropic, SKAX(AI4X) 등 다양한 LLM 제공업체 지원
+- **다중 LLM 지원**: OpenAI, Anthropic, SKAX(SKAX) 등 다양한 LLM 제공업체 지원
+- **영구 저장소**: 모든 분석 결과를 JSON 형태로 저장하여 서버 재시작 후에도 유지 ⭐ **NEW**
 - **완전한 Docker 지원**: 5개 서비스 통합 Docker Compose 환경 (ChromaDB, MariaDB, Redis 포함)
 
 ## 🏗️ 시스템 아키텍처
@@ -77,25 +82,49 @@ CoE 플랫폼은 마이크로서비스 아키텍처로 설계되어 각 서비�
 
 ### 🔄 워크플로우
 1. **분석 요청**: 사용자가 Git 레포지토리 분석을 CoE-RagPipeline에 요청
-2. **코드 분석**: AST 분석, 기술 스택 감지, 의존성 분석, 레포지토리간 연관관계 추출 수행
-3. **문서 수집**: README, doc 폴더, 참조 URL에서 개발 문서 자동 수집
-4. **벡터화**: 분석 결과 및 문서를 임베딩하여 ChromaDB에 저장
-5. **가이드 생성**: CoE-Backend가 분석 결과를 기반으로 LLM을 통해 AI 가이드 생성
-6. **결과 제공**: 표준 개발 가이드, 공통 코드화 가이드, 재활용 함수 가이드를 사용자에게 제공
-7. **대화형 상호작용**: OpenWebUI를 통해 생성된 가이드에 대한 질의응답 및 추가 분석
+2. **스마트 분석 결정**: Commit hash 기준으로 변경사항 감지, 동일 commit은 기존 결과 재사용 ⭐ **NEW**
+3. **코드 분석**: AST 분석, 기술 스택 감지, 의존성 분석, 레포지토리간 연관관계 추출 수행
+4. **문서 수집**: README, doc 폴더, 참조 URL에서 개발 문서 자동 수집
+5. **벡터화**: 분석 결과 및 문서를 임베딩하여 ChromaDB에 저장 (analysis_id별 분리 저장)
+6. **자동 리포트 생성**: 분석 완료 시 마크다운 형식의 상세 분석 리포트 자동 생성 ⭐ **NEW**
+7. **LLM 문서 생성**: 분석 결과를 바탕으로 7가지 타입의 개발 문서 자동 생성 ⭐ **NEW**
+8. **결과 제공**: 표준 개발 가이드, 공통 코드화 가이드, 재활용 함수 가이드를 사용자에게 제공
+9. **대화형 상호작용**: OpenWebUI를 통해 생성된 가이드에 대한 질의응답 및 추가 분석
 
 ## 📂 프로젝트 구조
 
 ```
 CoE/
 ├── CoE-Backend/            # LangGraph 에이전트 및 FastAPI 서버
+│   ├── tools/              # 도구 레지스트리 패턴 (자동 등록)
+│   ├── api/                # API 엔드포인트 (21개)
+│   ├── core/               # 핵심 비즈니스 로직
+│   ├── services/           # 서비스 레이어
 │   ├── Dockerfile
 │   ├── main.py
 │   └── README.md
 ├── CoE-RagPipeline/        # Git 분석 및 RAG 파이프라인
+│   ├── analyzers/          # Git/AST 분석 엔진
+│   ├── services/           # LLM 문서 생성 서비스
+│   ├── routers/            # API 라우터 (문서 생성 포함)
+│   ├── output/             # 분석 결과 저장소
+│   │   ├── results/        # JSON 분석 결과
+│   │   ├── markdown/       # 마크다운 리포트
+│   │   └── documents/      # LLM 생성 문서
 │   ├── Dockerfile
 │   ├── main.py
 │   └── README.md
+├── db/                     # 데이터베이스 스키마 및 마이그레이션
+│   ├── init/               # 초기 설정 스크립트
+│   ├── migrate/            # 마이그레이션 스크립트
+│   └── README.md
+├── docs/                   # 프로젝트 문서
+├── run_all.sh              # 통합 실행 스크립트
+├── run_backend.sh          # Backend 개별 실행
+├── run_pipeline.sh         # Pipeline 개별 실행
+├── stop_all.sh             # 전체 중지 스크립트
+├── docker-compose.yml      # 전체 Docker 환경
+├── docker-compose.local.yml # 로컬 개발 환경
 ├── .gitignore
 └── README.md               # 현재 보고 있는 파일
 ```
@@ -309,11 +338,11 @@ docker-compose -f docker-compose.local.yml down
 ```
 
 **실행되는 서비스들:**
-- **ChromaDB**: 벡터 데이터베이스 (포트 6666)
-- **MariaDB**: 관계형 데이터베이스 - 사용자 관리, 세션, 분석 결과 저장 (포트 6667)  
-- **Redis**: 캐싱 및 세션 관리 - JWT 토큰, 임베딩 캐시 (포트 6669)
-- **CoE-Backend**: AI 에이전트 및 API 서버 - LangGraph, 인증, 도구 라우팅 (포트 8000)
-- **CoE-RagPipeline**: Git 분석 및 RAG 파이프라인 - 코드 분석, 연관관계 추출, 가이드 생성 (포트 8001)
+- **ChromaDB**: 벡터 데이터베이스 - 코드/문서 임베딩, analysis_id별 분리 저장 (포트 6666)
+- **MariaDB**: 관계형 데이터베이스 - 사용자 관리, 채팅 히스토리, 분석 결과, 문서 생성 작업 저장 (포트 6667)  
+- **Redis**: 캐싱 및 세션 관리 - JWT 토큰, 임베딩 캐시, 대화 세션 (포트 6669)
+- **CoE-Backend**: AI 에이전트 및 API 서버 - LangGraph, 인증, 도구 라우팅, 멀티턴 대화 (포트 8000)
+- **CoE-RagPipeline**: Git 분석 및 RAG 파이프라인 - 스마트 분석, LLM 문서 생성, 마크다운 리포트 (포트 8001)
 
 ### 📊 시스템 상태 확인
 
@@ -457,20 +486,26 @@ curl -X POST "http://localhost:8001/api/v1/analyze" \
     "include_correlation": true
   }'
 
-# 응답에서 analysis_id 확인
-# 예: {"analysis_id": "3cbf3db0-fd9e-410c-bdaa-30cdeb9d7d6c", "status": "started"}
+# 스마트 분석 응답 예시:
+# 새로운 분석: {"analysis_id": "3cbf3db0-fd9e-410c-bdaa-30cdeb9d7d6c", "status": "started"}
+# 기존 결과 재사용: {"analysis_id": "existing-id", "status": "existing", "message": "동일 commit으로 기존 결과 사용"}
 ```
 
-### 🤖 2단계: AI 가이드 생성
+### 🤖 2단계: LLM 기반 문서 자동 생성 ⭐ **NEW**
 
 ```bash
-# CoE-RagPipeline에서 직접 가이드 생성
-curl -X POST "http://localhost:8001/api/v1/generate/guide" \
+# 7가지 타입의 문서 자동 생성
+curl -X POST "http://localhost:8001/api/v1/documents/generate" \
   -H "Content-Type: application/json" \
   -d '{
     "analysis_id": "3cbf3db0-fd9e-410c-bdaa-30cdeb9d7d6c",
-    "guide_types": ["dev_guide", "common_code", "reusable_functions"]
+    "document_types": ["development_guide", "api_documentation", "architecture_overview"],
+    "language": "korean",
+    "custom_prompt": "FastAPI와 LangGraph 관련 내용을 중심으로 작성해주세요."
   }'
+
+# 문서 생성 상태 확인
+curl -X GET "http://localhost:8001/api/v1/documents/status/{task_id}"
 
 # 또는 CoE-Backend AI 에이전트를 통한 대화형 가이드 생성
 curl -X POST "http://localhost:8000/v1/chat/completions" \
@@ -487,12 +522,34 @@ curl -X POST "http://localhost:8000/v1/chat/completions" \
   }'
 ```
 
-### 🎯 3단계: 결과 확인
+### 🔍 3단계: 분석별 RAG 검색 ⭐ **NEW**
 
-AI가 생성하는 가이드 예시:
-- **표준 개발 가이드**: 코딩 스타일, 네이밍 컨벤션, 아키텍처 패턴
-- **공통 코드화 가이드**: 중복 코드 패턴 및 모듈화 방안
-- **공통 함수 가이드**: 재사용 가능한 유틸리티 함수 추천
+```bash
+# 특정 분석 결과에서만 검색 (정확도 향상)
+curl -X POST "http://localhost:8001/api/v1/search" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "FastAPI 라우터 구조와 의존성 주입 패턴",
+    "k": 5,
+    "analysis_id": "3cbf3db0-fd9e-410c-bdaa-30cdeb9d7d6c"
+  }'
+```
+
+### 🎯 4단계: 결과 확인
+
+AI가 생성하는 문서 타입별 예시:
+- **개발 가이드**: 코딩 스타일, 네이밍 컨벤션, 아키텍처 패턴
+- **API 문서**: 엔드포인트 설명, 요청/응답 예시, 사용법 가이드
+- **아키텍처 개요**: 시스템 구조, 컴포넌트 관계, 데이터 흐름
+- **코드 리뷰 요약**: 발견된 이슈, 개선 사항, 권장사항
+- **기술 명세서**: 기술 스택, 의존성 정보, 버전 정보
+- **배포 가이드**: 환경 설정, 빌드 과정, 배포 단계
+- **문제 해결 가이드**: 일반적 오류, 해결 방법, 디버깅 팁
+
+### 📄 자동 생성된 파일 위치
+- **마크다운 리포트**: `output/markdown/{analysis_id}_analysis_report.md`
+- **LLM 생성 문서**: `output/documents/{analysis_id}/`
+- **JSON 분석 결과**: `output/results/{analysis_id}.json`
 
 ### 🌐 OpenWebUI 사용법
 
@@ -505,18 +562,24 @@ AI가 생성하는 가이드 예시:
 
 ## 🔧 문제 해결 (Troubleshooting)
 
-### 📋 현재 시스템 상태 (2025-08-01 기준)
+### 📋 현재 시스템 상태 (2025-08-03 기준)
 
 **✅ 정상 동작 확인된 기능**:
 - 모든 Docker 컨테이너 정상 실행 (5개 서비스)
-- 모든 API 엔드포인트 정상 응답 (CoE-Backend 21개, CoE-RagPipeline 4개)
-- 데이터베이스 연결 및 CRUD 작업 정상
+- 모든 API 엔드포인트 정상 응답 (CoE-Backend 21개, CoE-RagPipeline 8개)
+- 데이터베이스 연결 및 CRUD 작업 정상 (새로운 테이블 포함)
 - AI 에이전트 및 코딩 어시스턴트 정상 동작
+- **스마트 레포지토리 분석** (commit 기반 변경 감지) ⭐ **NEW**
+- **LLM 기반 문서 자동 생성** (7가지 타입) ⭐ **NEW**
+- **분석별 RAG 검색** (analysis_id 기반) ⭐ **NEW**
+- **마크다운 리포트 자동 생성** ⭐ **NEW**
+- **영구 저장소** (JSON 파일 저장) ⭐ **NEW**
 
-**⚠️ 알려진 개선 필요 사항**:
-1. OpenAI 호환 임베딩 API 구현 (`/v1/embeddings`)
-2. 벡터 문서 추가 기능 개선 (임베딩 서비스 연동)
-3. API 문서 및 사용 예시 보완
+**🆕 최신 업데이트 사항**:
+1. **채팅 히스토리 관리**: 모든 대화 내용 데이터베이스 저장 및 세션별 요약
+2. **문서 생성 작업 추적**: 백그라운드 문서 생성 작업의 상태 추적 시스템
+3. **Commit 기반 스마트 분석**: 중복 분석 방지 및 효율성 극대화
+4. **다국어 문서 생성**: 한국어/영어 지원 및 사용자 정의 프롬프트
 
 ### 일반적인 문제들
 
@@ -738,6 +801,21 @@ python -m pytest
 - **보안 문제**: 별도 연락처로 비공개 보고
 
 ## 🗺️ 로드맵
+
+### 🎯 완료된 주요 기능 (2025-08-03)
+- ✅ **스마트 레포지토리 분석**: Commit 기반 변경 감지로 효율성 극대화
+- ✅ **LLM 기반 문서 자동 생성**: 7가지 타입의 개발 문서 자동 생성
+- ✅ **분석별 RAG 검색**: analysis_id 기반 정확도 향상된 검색
+- ✅ **마크다운 리포트 자동 생성**: 분석 완료 시 상세 리포트 자동 생성
+- ✅ **영구 저장소**: JSON 파일 기반 분석 결과 영구 보존
+- ✅ **채팅 히스토리 관리**: 멀티턴 대화 및 세션별 요약 기능
+- ✅ **도구 레지스트리 패턴**: 코드 수정 없는 기능 확장 시스템
+
+### 🚀 향후 계획
+- 🔄 **실시간 협업 기능**: 팀 단위 분석 결과 공유 및 협업 도구
+- 🔄 **고급 코드 분석**: 보안 취약점 분석 및 성능 최적화 제안
+- 🔄 **CI/CD 통합**: GitHub Actions, GitLab CI와의 자동 연동
+- 🔄 **대시보드 UI**: 웹 기반 분석 결과 시각화 대시보드
 
 자세한 개발 현황 및 계획은 [Todo.md](Todo.md) 파일에서 확인하실 수 있습니다.
 
