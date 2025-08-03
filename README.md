@@ -150,90 +150,207 @@ cd CoE
 git submodule update --init --recursive
 ```
 
-### 2. 환경 변수 설정
+### 2. 환경 변수 설정 ⭐ **통합 .env 파일 사용**
 
-각 서비스에 필요한 환경 변수를 설정해야 합니다.
+CoE 프로젝트는 이제 **하나의 통합 .env 파일**로 local과 docker 환경을 모두 지원합니다.
 
-**CoE-Backend 환경 변수 설정:**
+**통합 환경 변수 설정:**
 ```bash
+# CoE-Backend 설정
 cd CoE-Backend
 cp .env.example .env
-```
+# API 키만 설정하면 됩니다 - 나머지는 자동으로 환경에 맞게 적용
 
-`.env` 파일을 편집하여 다음 값들을 설정하세요:
-```bash
-# === API 키 사용 정책 ===
-# SKAX_API_KEY: ax4 모델(sktax provider) 전용
-# OPENAI_API_KEY: OpenAI 서비스(임베딩, GPT 모델 등) 전용
-
-# SKAX API 설정 (ax4 모델 전용)
-SKAX_API_BASE=https://guest-api.sktax.chat/v1
-SKAX_API_KEY=your_skax_api_key_here
-SKAX_MODEL_NAME=ax4
-
-# OpenAI API 설정 (임베딩 및 OpenAI 모델 전용)
-OPENAI_API_KEY=your_openai_api_key_here
-ANTHROPIC_API_KEY=your_anthropic_api_key_here  # 선택사항
-
-# 데이터베이스 설정
-DATABASE_URL=mysql://coe_user:coe_password@mariadb:3306/coe_db
-
-# 벡터 데이터베이스 설정
-CHROMA_HOST=chroma
-CHROMA_PORT=6666
-
-# 임베딩 서비스 설정 (OpenAI 사용)
-# EMBEDDING_SERVICE_URL은 더 이상 사용하지 않음 - OpenAI API 직접 사용
-
-# Redis 설정
-REDIS_HOST=redis
-REDIS_PORT=6379
-REDIS_PASSWORD=coe_redis_password
-```
-
-**CoE-RagPipeline 환경 변수 설정:**
-```bash
+# CoE-RagPipeline 설정  
 cd ../CoE-RagPipeline
 cp .env.example .env
+# API 키만 설정하면 됩니다 - 나머지는 자동으로 환경에 맞게 적용
+
+cd ..
 ```
 
-`.env` 파일을 편집하여 다음 값들을 설정하세요:
+**필수 설정 항목 (API 키만 설정하면 됩니다):**
 ```bash
+# SKAX API 설정 (메인 LLM용)
+SKAX_API_KEY=your_skax_api_key_here
+
+# OpenAI API 설정 (임베딩용)
+OPENAI_API_KEY=your_openai_api_key_here
+```
+
+**자동 환경 감지:**
+- **로컬 개발**: localhost:6667 (MariaDB), localhost:6666 (ChromaDB), localhost:6669 (Redis)
+- **Docker 환경**: mariadb:3306, chroma:8000, redis:6379 (docker-compose.yml에서 자동 오버라이드)
+
+#### 📋 환경별 설정 차이
+
+| 설정 항목 | 로컬 환경 (.env.local 기본값) | Docker 환경 (오버라이드) |
+|-----------|------------------------|-------------------------|
+| **데이터베이스** |
+| DB_HOST | localhost | mariadb |
+| DB_PORT | 6667 | 3306 |
+| **ChromaDB** |
+| CHROMA_HOST | localhost | chroma |
+| CHROMA_PORT | 6666 | 8000 |
+| **Redis** |
+| REDIS_HOST | localhost | redis |
+| REDIS_PORT | 6669 | 6379 |
+| **애플리케이션** |
+| APP_ENV | development | production |
+| DEBUG | true | false |
+| LOG_LEVEL | DEBUG | INFO |
+| RELOAD | true | false |
+
+#### 🔧 .env 파일 구조 예시
+
+```bash
+# ===================================================================
+# CoE 통합 환경 설정 파일
+# ===================================================================
+# 이 파일은 local과 docker 환경을 모두 지원합니다.
+# 
+# 사용법:
+# 1. 로컬 개발: 이 파일을 .env.local로 복사하여 사용 (기본값)
+# 2. Docker 환경: docker-compose.yml에서 환경 변수로 오버라이드
+# 
+# 환경 변수 우선순위:
+# 1. 시스템 환경 변수 (Docker에서 설정)
+# 2. 이 파일의 설정값 (로컬 개발용 기본값)
+# ===================================================================
+
 # === API 키 사용 정책 ===
 # SKAX_API_KEY: ax4 모델(sktax provider) 전용
 # OPENAI_API_KEY: OpenAI 서비스(임베딩, GPT 모델 등) 전용
 
-# SKAX API 설정 (ax4 모델 전용)
+# SKAX API 설정 (메인 LLM용 - ax4 모델)
 SKAX_API_BASE=https://guest-api.sktax.chat/v1
-SKAX_API_KEY=your_skax_api_key_here
+SKAX_API_KEY=[YOUR_SKAX_API_KEY]
 SKAX_MODEL_NAME=ax4
 
-# OpenAI API 설정 (임베딩 및 OpenAI 모델 전용)
-OPENAI_API_KEY=your_openai_api_key_here
+# OpenAI API 설정
+OPENAI_API_KEY=[YOUR_OPENAI_API_KEY]
+OPENAI_EMBEDDING_MODEL_NAME=text-embedding-3-large
 
-# 데이터베이스 설정
-DATABASE_URL=mysql://coe_user:coe_password@mariadb:3306/coe_db
+# === 데이터베이스 설정 ===
+# 로컬 환경 기본값: localhost:6667
+# Docker 환경에서는 docker-compose.yml에서 mariadb:3306으로 오버라이드
+DB_HOST=localhost
+DB_PORT=6667
+DB_USER=coe_user
+DB_PASSWORD=coe_password
+DB_NAME=coe_db
 
-# 벡터 데이터베이스 설정
-CHROMA_HOST=chroma
+# === ChromaDB 설정 ===
+# 로컬 환경 기본값: localhost:6666
+# Docker 환경에서는 docker-compose.yml에서 chroma:8000으로 오버라이드
+CHROMA_HOST=localhost
 CHROMA_PORT=6666
+CHROMA_COLLECTION_NAME=coe_documents
 
-# 임베딩 서비스 설정 (OpenAI 사용)
-# EMBEDDING_SERVICE_URL은 더 이상 사용하지 않음 - OpenAI API 직접 사용
-
-# Redis 설정
-REDIS_HOST=redis
-REDIS_PORT=6379
+# === Redis 설정 ===
+# 로컬 환경 기본값: localhost:6669
+# Docker 환경에서는 docker-compose.yml에서 redis:6379로 오버라이드
+REDIS_HOST=localhost
+REDIS_PORT=6669
 REDIS_PASSWORD=coe_redis_password
+REDIS_AUTH_DB=1
 
-# Git 분석 설정
+# === JWT 인증 설정 ===
+JWT_SECRET_KEY=your-super-secret-jwt-key-change-this-in-production
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
+
+# === 보안 설정 ===
+ENFORCE_AUTH=false
+RATE_LIMIT_PER_MINUTE=60
+
+# === 애플리케이션 환경 ===
+# 로컬 환경 기본값: development
+# Docker 환경에서는 docker-compose.yml에서 production으로 오버라이드
+APP_ENV=development
+
+# === Git 분석 설정 ===
 MAX_REPO_SIZE_MB=500
 ANALYSIS_TIMEOUT_MINUTES=30
+
+# === 개발 설정 ===
+# 로컬 환경 기본값
+# Docker 환경에서는 docker-compose.yml에서 오버라이드
+DEBUG=true
+LOG_LEVEL=DEBUG
+RELOAD=true
 ```
 
+#### 🚀 로컬 개발 환경 설정 가이드
+
+##### 미리 만들어둔 .sh 스크립트 활용 (권장)
+
 ```bash
-cd ..
+# 1. 인프라 서비스만 Docker로 실행
+docker-compose -f docker-compose.local.yml up -d
+
+# 2. 각 애플리케이션을 .sh 스크립트로 실행 (.venv 가상환경 자동 생성/활성화)
+cd CoE-Backend
+./run.sh
+
+# 새 터미널에서
+cd CoE-RagPipeline  
+./run.sh
 ```
+
+##### 📦 .venv 가상환경 자동 관리
+
+각 `run.sh` 스크립트는 다음 작업을 자동으로 수행합니다:
+
+- **가상환경 자동 생성**: `.venv` 디렉토리가 없으면 `python3 -m venv .venv`로 생성
+- **가상환경 활성화**: `source .venv/bin/activate` 자동 실행
+- **의존성 자동 설치**: `pip install -r requirements.txt` 자동 실행
+- **환경변수 로드**: `.env.local` 파일에서 환경변수 자동 로드
+- **서버 실행**: 설정된 환경에서 `python main.py` 실행
+
+##### 🔧 환경 설정 파일
+
+각 애플리케이션은 `.env.local` 파일을 사용합니다:
+
+```bash
+# CoE-Backend/.env.local 생성
+cd CoE-Backend
+cp .env.example .env.local
+# API 키 등 필요한 설정 편집
+
+# CoE-RagPipeline/.env.local 생성  
+cd CoE-RagPipeline
+cp .env.example .env.local
+# API 키 등 필요한 설정 편집
+```
+
+##### 🔄 수동 실행 방식 (선택사항)
+
+스크립트 없이 수동으로 실행하려면:
+
+```bash
+# 1. 인프라 서비스만 Docker로 실행
+docker-compose -f docker-compose.local.yml up -d
+
+# 2. 각 애플리케이션 수동 실행
+cd CoE-Backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python main.py
+
+# 새 터미널에서
+cd CoE-RagPipeline
+python3 -m venv .venv
+source .venv/bin/activate  
+pip install -r requirements.txt
+python main.py
+```
+
+**설정값**: .env.local 파일의 기본값 사용
+- DB_HOST=localhost, DB_PORT=6667
+- CHROMA_HOST=localhost, CHROMA_PORT=6666
+- REDIS_HOST=localhost, REDIS_PORT=6669
 
 ### 3. 다양한 실행 환경 옵션
 

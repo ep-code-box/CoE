@@ -1,5 +1,6 @@
 # Docker Compose for Local Development
 # 로컬 개발 환경용 - 인프라 서비스만 Docker로 실행하고 애플리케이션은 로컬에서 실행
+# 통합 .env 파일 사용 - 로컬 환경 기본값으로 설정됨
 services:
   # 인프라 서비스들만 실행
   chroma:

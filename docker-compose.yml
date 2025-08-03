@@ -68,7 +68,21 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - ./CoE-Backend/.env.docker
+      - ./CoE-Backend/.env
+    environment:
+      # Docker 환경 오버라이드
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - CHROMA_HOST=chroma
+      - CHROMA_PORT=8000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LANGFLOW_HOST=langflow
+      - LANGFLOW_PORT=7860
+      - APP_ENV=production
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+      - RELOAD=false
     volumes:
       - ./CoE-Backend/flows:/app/flows
     depends_on:
@@ -98,7 +112,19 @@ services:
     ports:
       - "8001:8001"
     env_file:
-      - ./CoE-RagPipeline/.env.docker
+      - ./CoE-RagPipeline/.env
+    environment:
+      # Docker 환경 오버라이드
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - CHROMA_HOST=chroma
+      - CHROMA_PORT=8000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - APP_ENV=production
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+      - RELOAD=false
     volumes:
       - ./CoE-RagPipeline/output:/app/output
       - ./CoE-RagPipeline/chroma_db:/app/chroma_db
