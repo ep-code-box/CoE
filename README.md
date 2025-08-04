@@ -348,6 +348,34 @@ python main.py
 ```
 
 **설정값**: .env.local 파일의 기본값 사용
+
+## 🔧 문제 해결 (Troubleshooting)
+
+### macOS에서 chroma-hnswlib 컴파일 오류
+
+**문제**: macOS에서 ChromaDB 설치 시 다음과 같은 오류가 발생할 수 있습니다:
+```
+clang++: error: unsupported argument 'native' to option '-march='
+error: command '/usr/bin/clang++' failed with exit code 1
+```
+
+**원인**: macOS의 clang++ 컴파일러는 `-march=native` 플래그를 지원하지 않습니다.
+
+**해결방법**:
+1. **환경변수 설정**: 터미널에서 다음 명령어를 실행하세요:
+   ```bash
+   export HNSWLIB_NO_NATIVE=1
+   ```
+
+2. **자동 해결**: 프로젝트의 `run.sh` 스크립트는 이미 이 환경변수를 자동으로 설정하므로, 스크립트를 사용하면 문제가 자동으로 해결됩니다.
+
+3. **수동 설치**: 직접 pip install을 실행하는 경우:
+   ```bash
+   export HNSWLIB_NO_NATIVE=1
+   pip install chromadb
+   ```
+
+**참고**: 이 설정은 CoE-Backend와 CoE-RagPipeline의 `run.sh` 스크립트에 이미 포함되어 있습니다.
 - DB_HOST=localhost, DB_PORT=6667
 - CHROMA_HOST=localhost, CHROMA_PORT=6666
 - REDIS_HOST=localhost, REDIS_PORT=6669
