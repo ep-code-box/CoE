@@ -150,20 +150,24 @@ cd CoE
 git submodule update --init --recursive
 ```
 
-### 2. 환경 변수 설정 ⭐ **통합 .env 파일 사용**
+### 2. 환경 변수 설정 ⭐ **환경별 .env 파일 관리**
 
-CoE 프로젝트는 이제 **하나의 통합 .env 파일**로 local과 docker 환경을 모두 지원합니다.
+CoE 프로젝트는 각 서비스 디렉토리 내의 `.env` 파일을 통해 환경 변수를 관리합니다. 로컬 개발 환경과 Docker 환경 모두에서 일관된 설정을 유지하면서도, 각 환경의 특성에 맞게 자동으로 환경 변수가 로드되도록 설계되었습니다.
 
-**통합 환경 변수 설정:**
+**환경 변수 설정 방법:**
+각 서비스 디렉토리(`CoE-Backend`, `CoE-RagPipeline`)로 이동하여 `.env.example` 파일을 `.env` 또는 `.env.local`로 복사하고 필요한 API 키를 설정합니다.
+
 ```bash
 # CoE-Backend 설정
 cd CoE-Backend
-cp .env.example .env
+cp .env.example .env.local # 로컬 개발 시 .env.local 사용
+# 또는 cp .env.example .env # Docker 환경에서 직접 빌드 시 .env 사용
 # API 키만 설정하면 됩니다 - 나머지는 자동으로 환경에 맞게 적용
 
 # CoE-RagPipeline 설정  
 cd ../CoE-RagPipeline
-cp .env.example .env
+cp .env.example .env.local # 로컬 개발 시 .env.local 사용
+# 또는 cp .env.example .env # Docker 환경에서 직접 빌드 시 .env 사용
 # API 키만 설정하면 됩니다 - 나머지는 자동으로 환경에 맞게 적용
 
 cd ..
@@ -178,9 +182,9 @@ SKAX_API_KEY=your_skax_api_key_here
 OPENAI_API_KEY=your_openai_api_key_here
 ```
 
-**자동 환경 감지:**
-- **로컬 개발**: localhost:6667 (MariaDB), localhost:6666 (ChromaDB), localhost:6669 (Redis)
-- **Docker 환경**: mariadb:3306, chroma:8000, redis:6379 (docker-compose.yml에서 자동 오버라이드)
+**자동 환경 감지 및 오버라이드:**
+- **로컬 개발**: `run.sh` 스크립트가 `.env.local` 파일을 로드하여 `localhost` 기반의 인프라 서비스(MariaDB, ChromaDB, Redis)에 연결합니다.
+- **Docker 환경**: `docker-compose.yml` 파일이 컨테이너 내부에서 사용할 환경 변수를 자동으로 오버라이드하여 서비스 이름(예: `mariadb`, `chroma`, `redis`) 기반으로 연결합니다.
 
 #### 📋 환경별 설정 차이
 
@@ -205,17 +209,18 @@ OPENAI_API_KEY=your_openai_api_key_here
 
 ```bash
 # ===================================================================
-# CoE 통합 환경 설정 파일
+# CoE 환경 설정 파일 예시
 # ===================================================================
-# 이 파일은 local과 docker 환경을 모두 지원합니다.
+# 이 파일은 각 서비스 디렉토리 내에 위치하며, 로컬 개발 및 Docker 환경에서 사용됩니다.
 # 
 # 사용법:
-# 1. 로컬 개발: 이 파일을 .env.local로 복사하여 사용 (기본값)
-# 2. Docker 환경: docker-compose.yml에서 환경 변수로 오버라이드
+# - 로컬 개발: .env.example을 .env.local로 복사하여 사용 (run.sh 스크립트가 자동 로드)
+# - Docker 환경: docker-compose.yml에서 환경 변수로 오버라이드되거나,
+#                Dockerfile 빌드 시 .env 파일을 복사하여 사용될 수 있습니다.
 # 
 # 환경 변수 우선순위:
 # 1. 시스템 환경 변수 (Docker에서 설정)
-# 2. 이 파일의 설정값 (로컬 개발용 기본값)
+# 2. .env 파일의 설정값 (로컬 개발용 기본값)
 # ===================================================================
 
 # === API 키 사용 정책 ===
@@ -506,41 +511,7 @@ docker-compose logs -f coe-backend
 docker-compose logs -f coe-rag-pipeline
 ```
 
-### 4. 환경 변수 설정
 
-각 환경에 맞는 환경 변수 파일이 자동으로 설정됩니다:
-
-#### 🔧 환경별 .env 파일
-
-| 환경 | CoE-Backend | CoE-RagPipeline | 설명 |
-|------|-------------|-----------------|------|
-| **local** | `.env.local` → `.env` | `.env.local` → `.env` | 로컬 개발용 (localhost 연결) |
-| **docker** | `.env.docker` | `.env.docker` | Docker 네트워크용 (컨테이너명 연결) |
-| **native** | `.env.example` → `.env` | `.env.example` → `.env` | 완전 로컬용 (수동 설정 필요) |
-
-#### ⚙️ 주요 설정 차이점
-
-**로컬 개발 환경 (.env.local):**
-```bash
-# 인프라 서비스는 Docker 컨테이너에 연결
-DB_HOST=localhost
-DB_PORT=6667
-CHROMA_HOST=localhost
-CHROMA_PORT=6666
-REDIS_HOST=localhost
-REDIS_PORT=6669
-```
-
-**Docker 환경 (.env.docker):**
-```bash
-# 모든 서비스가 Docker 네트워크에서 연결
-DB_HOST=mariadb
-DB_PORT=3306
-CHROMA_HOST=chroma
-CHROMA_PORT=8000
-REDIS_HOST=redis
-REDIS_PORT=6379
-```
 
 ### 5. 로컬 개발 가이드
 
@@ -707,28 +678,9 @@ AI가 생성하는 문서 타입별 예시:
 
 ## 🔧 문제 해결 (Troubleshooting)
 
-### 📋 현재 시스템 상태 (2025-08-03 기준)
+일반적인 문제 해결 방법은 다음과 같습니다. 더 자세한 내용은 각 서비스의 `README.md` 파일을 참조해주세요.
 
-**✅ 정상 동작 확인된 기능**:
-- 모든 Docker 컨테이너 정상 실행 (5개 서비스)
-- 모든 API 엔드포인트 정상 응답 (CoE-Backend 21개, CoE-RagPipeline 8개)
-- 데이터베이스 연결 및 CRUD 작업 정상 (새로운 테이블 포함)
-- AI 에이전트 및 코딩 어시스턴트 정상 동작
-- **스마트 레포지토리 분석** (commit 기반 변경 감지) ⭐ **NEW**
-- **LLM 기반 문서 자동 생성** (7가지 타입) ⭐ **NEW**
-- **분석별 RAG 검색** (analysis_id 기반) ⭐ **NEW**
-- **마크다운 리포트 자동 생성** ⭐ **NEW**
-- **영구 저장소** (JSON 파일 저장) ⭐ **NEW**
-
-**🆕 최신 업데이트 사항**:
-1. **채팅 히스토리 관리**: 모든 대화 내용 데이터베이스 저장 및 세션별 요약
-2. **문서 생성 작업 추적**: 백그라운드 문서 생성 작업의 상태 추적 시스템
-3. **Commit 기반 스마트 분석**: 중복 분석 방지 및 효율성 극대화
-4. **다국어 문서 생성**: 한국어/영어 지원 및 사용자 정의 프롬프트
-
-### 일반적인 문제들
-
-#### 🐳 Docker 관련 문제
+### 🐳 Docker 관련 문제
 
 **문제**: `docker-compose up` 실행 시 포트 충돌 오류
 ```
@@ -762,7 +714,7 @@ docker-compose config
 docker-compose up -d --build --force-recreate
 ```
 
-#### 🔑 환경 변수 관련 문제
+### 🔑 환경 변수 관련 문제
 
 **문제**: API 키 관련 오류 또는 인증 실패
 
@@ -780,7 +732,7 @@ docker-compose down
 docker-compose up -d
 ```
 
-#### 🌐 네트워크 연결 문제
+### 🌐 네트워크 연결 문제
 
 **문제**: 서비스 간 통신 실패
 
@@ -796,7 +748,7 @@ docker-compose exec coe-backend curl http://chroma:8000/api/v1/heartbeat
 docker-compose exec coe-backend curl http://koEmbeddings:6668/health
 ```
 
-#### 📊 데이터베이스 연결 문제
+### 📊 데이터베이스 연결 문제
 
 **문제**: MariaDB 또는 ChromaDB 연결 실패
 
@@ -812,7 +764,7 @@ docker-compose exec coe-backend curl http://localhost:8000/test/vector
 docker-compose restart mariadb chroma
 ```
 
-#### 🔍 API 요청 문제
+### 🔍 API 요청 문제
 
 **문제**: curl로 POST 요청 시 422 오류 발생
 
@@ -868,9 +820,9 @@ docker-compose up -d
 문제가 지속되는 경우:
 
 1. **상세 문서 참조**:
-   - `/docs/API_USAGE_GUIDE.md`: 완전한 API 사용 가이드
-   - `/API_TROUBLESHOOTING.md`: 상세한 문제 해결 가이드
-   - `/기능점검결과.md`: 최신 시스템 상태 보고서
+   - `CoE-Backend/README.md`: CoE-Backend 상세 문제 해결 가이드
+   - `CoE-RagPipeline/README.md`: CoE-RagPipeline 상세 문제 해결 가이드
+   - `docs/SWAGGER_GUIDE.md`: Swagger UI 사용 가이드
 
 2. **로그 수집**:
    ```bash
@@ -890,7 +842,7 @@ logging:
   options:
     max-size: "10m"
     max-file: "3"
-```
+
 
 ## 🤝 기여하기 (Contributing)
 
