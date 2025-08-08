@@ -8,7 +8,7 @@ services:
     ports:
       - "6666:8000"
     volumes:
-      - ./db/chroma:/chroma/chroma
+      - ./db/chroma:/data
     environment:
       - IS_PERSISTENT=TRUE
     networks:
