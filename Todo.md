@@ -35,6 +35,7 @@
     - [x] 분석, 문서 생성, 검색 등 주요 기능 API
     - [x] 분석 결과 영구 저장 (JSON, Markdown)
     - [x] 시스템 상태 및 DB 연결 확인 API (`/health`)
+    - [x] RDB 스키마 임베딩 및 검색 기능 (`/embed_rdb_schema`)
 
 ### 🔧 Infrastructure & DevOps
 - [x] 전체 서비스 통합 Docker Compose 환경 (`docker-compose.yml`)
@@ -45,10 +46,6 @@
 ## 📝 향후 개발 계획
 
 ### 🚀 CoE-Backend
-- [ ] **고급 인증 및 보안**
-    - [ ] OAuth 2.0 기반 사용자 인증 시스템
-    - [ ] 역할 기반 접근 제어(RBAC)
-    - [ ] API 요청 속도 제한 및 로깅 강화
 - [ ] **채팅 기능 고도화**
     - [ ] 대화 히스토리 요약 및 관리 기능
     - [ ] 파일 업로드 및 처리 기능 (이미지, 문서 등)
