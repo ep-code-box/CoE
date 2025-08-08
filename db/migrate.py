@@ -144,6 +144,11 @@ class DatabaseMigrator:
                 'version': '002_create_tables',
                 'description': '기본 테이블 생성',
                 'file': 'init/02_create_tables.sql'
+            },
+            {
+                'version': '003_add_group_name_to_conversation_summaries',
+                'description': 'conversation_summaries 테이블에 group_name 컬럼 추가',
+                'file': 'init/03_add_group_name_to_conversation_summaries.sql'
             }
         ]
         
