@@ -13,3 +13,6 @@ __pycache__/
 *.pid
 *.swp
 *.bak
+CoE-Cli
+.venv
+node_modules
