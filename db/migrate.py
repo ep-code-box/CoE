@@ -8,6 +8,7 @@ import sys
 import mysql.connector
 from datetime import datetime
 from dotenv import load_dotenv
+import pymysql
 
 # 환경 변수 로드
 load_dotenv()
@@ -110,27 +111,27 @@ class DatabaseMigrator:
             print(f"❌ 마이그레이션 기록 실패: {e}")
             return False
     
-    def execute_sql_file(self, filepath):
-        """SQL 파일을 실행합니다."""
-        try:
-            with open(filepath, 'r', encoding='utf-8') as f:
-                sql_content = f.read()
-            
-            # SQL 문을 세미콜론으로 분리하여 실행
-            statements = [stmt.strip() for stmt in sql_content.split(';') if stmt.strip()]
-            
-            for statement in statements:
-                if statement:
+
+    def _execute_sql_file(self, filepath):
+        """SQL 파일을 읽어 실행합니다."""
+        with open(filepath, 'r', encoding='utf-8') as f:
+            sql_script = f.read()
+        
+        # SQL 스크립트를 세미콜론으로 분리하여 각 명령 실행
+        for statement in sql_script.split(';'):
+            statement = statement.strip()
+            if statement:
+                print(f"Executing SQL: {statement[:100]}...") # Log the full statement
+                try:
                     self.cursor.execute(statement)
-            
-            self.connection.commit()
-            print(f"✅ SQL 파일 실행 완료: {filepath}")
-            return True
-            
-        except Exception as e:
-            print(f"❌ SQL 파일 실행 실패: {filepath} - {e}")
-            self.connection.rollback()
-            return False
+                    print(f"Executed successfully: {statement[:50]}...")
+                except mysql.connector.Error as e:
+                    print(f"Error executing statement: {statement[:50]}... Error: {e}")
+                    return False # Return False on error
+                except Exception as e:
+                    print(f"Unexpected error: {e}")
+                    return False # Return False on error
+        return True # Return True on success
     
     def run_migrations(self):
         """모든 마이그레이션을 실행합니다."""
@@ -149,6 +150,11 @@ class DatabaseMigrator:
                 'version': '003_add_group_name_to_conversation_summaries',
                 'description': 'conversation_summaries 테이블에 group_name 컬럼 추가',
                 'file': 'init/03_add_group_name_to_conversation_summaries.sql'
+            },
+            {
+                'version': '004_add_group_name_to_analysis_request',
+                'description': 'analysis_requests 테이블에 group_name 컬럼 추가',
+                'file': 'init/04_add_group_name_to_analysis_request.sql'
             }
         ]
         
