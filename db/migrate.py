@@ -155,6 +155,11 @@ class DatabaseMigrator:
                 'version': '004_add_group_name_to_analysis_request',
                 'description': 'analysis_requests 테이블에 group_name 컬럼 추가',
                 'file': 'init/04_add_group_name_to_analysis_request.sql'
+            },
+            {
+                'version': '005_create_langflows_table',
+                'description': 'LangFlow 워크플로우 테이블 생성',
+                'file': 'init/05_create_langflows_table.sql'
             }
         ]
         

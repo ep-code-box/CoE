@@ -10,7 +10,8 @@ db/
 │   ├── 01_create_database.sql      # 데이터베이스 및 사용자 생성
 │   ├── 02_create_tables.sql        # 기본 테이블 생성
 │   ├── 03_insert_sample_data.sql   # 샘플 데이터 삽입
-│   └── 04_add_missing_tables.sql   # 누락된 테이블 추가 ⭐ NEW
+│   ├── 04_add_missing_tables.sql   # 누락된 테이블 추가 ⭐ NEW
+│   └── 05_create_langflows_table.sql # LangFlow 워크플로우 테이블 추가 ⭐ NEW
 ├── migrate/                        # 마이그레이션 스크립트
 │   ├── 001_initial_schema.sql      # 초기 스키마 마이그레이션
 │   ├── 002_create_auth_tables.sql  # 인증 테이블 생성
@@ -57,18 +58,21 @@ db/
 
 ### 🆕 새로 추가된 테이블들
 
-#### 1. 채팅 히스토리 관련
+#### 1. LangFlow 워크플로우 관련
+- **`langflows`**: LangFlow 워크플로우 정의 및 메타데이터 저장
+
+#### 2. 채팅 히스토리 관련
 - **`chat_messages`**: 사용자와 AI 간의 모든 채팅 메시지 저장
 - **`conversation_summaries`**: 3턴 멀티턴 대화 지원을 위한 세션별 요약
 
-#### 2. 문서 생성 관련
+#### 3. 문서 생성 관련
 - **`document_generation_tasks`**: LLM 기반 문서 생성 작업의 상태 추적
 - **`generated_documents`**: 생성된 문서 파일의 메타데이터
 
-#### 3. 시스템 관리
+#### 4. 시스템 관리
 - **`system_settings`**: 시스템 전반의 설정값 관리
 
-#### 4. 기존 테이블 확장
+#### 5. 기존 테이블 확장
 - **`repository_analyses`**: commit 정보 필드 추가 (commit_hash, commit_date, commit_author, commit_message)
 
 ## 🚀 사용 방법
@@ -87,6 +91,9 @@ mysql -h localhost -P 6667 -u coe_user -p coe_db < init/02_create_tables.sql
 
 # 3. 누락된 테이블 추가
 mysql -h localhost -P 6667 -u coe_user -p coe_db < init/04_add_missing_tables.sql
+
+# 4. LangFlow 워크플로우 테이블 추가
+mysql -h localhost -P 6667 -u coe_user -p coe_db < init/05_create_langflows_table.sql
 
 # 4. 샘플 데이터 삽입 (선택사항)
 mysql -h localhost -P 6667 -u coe_user -p coe_db < init/03_insert_sample_data.sql
