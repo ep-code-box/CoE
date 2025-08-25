@@ -160,6 +160,11 @@ class DatabaseMigrator:
                 'version': '005_create_langflows_table',
                 'description': 'LangFlow 워크플로우 테이블 생성',
                 'file': 'init/05_create_langflows_table.sql'
+            },
+            {
+                'version': '006_create_langflow_tool_mappings_table',
+                'description': 'LangFlow 도구 매핑 테이블 생성',
+                'file': 'init/06_create_langflow_tool_mappings_table.sql'
             }
         ]
         

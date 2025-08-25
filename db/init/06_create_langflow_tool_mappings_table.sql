@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS langflow_tool_mappings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    flow_id VARCHAR(255) NOT NULL,
+    tool_name VARCHAR(255) NOT NULL,
+    context VARCHAR(255) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY (context, tool_name),
+    FOREIGN KEY (flow_id) REFERENCES langflows(flow_id) ON DELETE CASCADE
+);
