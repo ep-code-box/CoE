@@ -85,6 +85,7 @@ services:
       - RELOAD=false
     volumes:
       - ./CoE-Backend/flows:/app/flows
+      - /coe/backend/log:/app/logs
     depends_on:
       - chroma
       - mariadb
@@ -128,6 +129,7 @@ services:
     volumes:
       - ./CoE-RagPipeline/output:/app/output
       - ./CoE-RagPipeline/chroma_db:/app/chroma_db
+      - /coe/ragpipeline/log:/app/logs
     depends_on:
       - chroma
       - mariadb

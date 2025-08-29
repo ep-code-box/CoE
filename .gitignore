@@ -16,3 +16,5 @@ __pycache__/
 CoE-Cli
 .venv
 node_modules
+.continue
+.pytest_cache
