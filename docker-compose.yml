@@ -102,8 +102,8 @@ services:
         max-size: "10m"
         max-file: "3"
         labels: "service=coe-backend"
-    # 로그 파일 생성을 위한 추가 설정
-    user: "1000:1000"  # 호스트 사용자 ID로 실행
+    # 로그 파일 생성을 위한 추가 설정 (권한 문제 해결)
+    # user: "1000:1000"  # 주석 처리하여 권한 문제 방지
     # healthcheck:
     #   test: ["CMD", "sh", "-c", "exec 3<>/dev/tcp/localhost/8000"]
     #   interval: 30s
