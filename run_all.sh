@@ -39,10 +39,28 @@ show_usage() {
     echo "  $0 local   # 인프라만 Docker로 실행"
 }
 
+# Docker Compose 명령어 결정
+get_docker_compose_cmd() {
+    if docker compose version &> /dev/null; then
+        echo "docker compose"
+    elif docker-compose version &> /dev/null; then
+        echo "docker-compose"
+    else
+        echo ""
+    fi
+}
+
 # Docker 설치 및 실행 상태 확인
 check_docker() {
-    if ! command -v docker &> /dev/null || ! command -v docker-compose &> /dev/null; then
-        log_error "Docker 또는 Docker Compose가 설치되지 않았습니다. 먼저 설치해주세요."
+    DOCKER_COMPOSE_CMD=$(get_docker_compose_cmd)
+
+    if ! command -v docker &> /dev/null; then
+        log_error "Docker가 설치되지 않았습니다. 먼저 설치해주세요."
+        exit 1
+    fi
+
+    if [ -z "$DOCKER_COMPOSE_CMD" ]; then
+        log_error "Docker Compose (v1 또는 v2)가 설치되지 않았습니다. 먼저 설치해주세요."
         exit 1
     fi
     
@@ -56,21 +74,22 @@ check_docker() {
 main() {
     # Docker 상태 확인
     check_docker
+    DOCKER_COMPOSE_CMD=$(get_docker_compose_cmd) # 다시 한번 설정하여 main 함수 내에서 사용 가능하게 함
 
     # 옵션에 따른 분기 처리
     if [ "$1" == "full" ]; then
         log_info "모든 서비스를 Docker Compose로 시작합니다... (docker-compose.yml)"
-        docker-compose -f docker-compose.yml up -d --build
+        $DOCKER_COMPOSE_CMD -f docker-compose.yml up -d --build
         log_success "모든 서비스가 시작되었습니다."
         echo ""
-        docker-compose -f docker-compose.yml ps
+        $DOCKER_COMPOSE_CMD -f docker-compose.yml ps
 
     elif [ "$1" == "local" ]; then
         log_info "로컬 개발을 위해 인프라 서비스를 시작합니다... (docker-compose.local.yml)"
-        docker-compose -f docker-compose.local.yml up -d --build
+        $DOCKER_COMPOSE_CMD -f docker-compose.local.yml up -d --build
         log_success "인프라 서비스가 시작되었습니다."
         echo ""
-        docker-compose -f docker-compose.local.yml ps
+        $DOCKER_COMPOSE_CMD -f docker-compose.local.yml ps
 
     else
         log_error "잘못된 옵션입니다."
