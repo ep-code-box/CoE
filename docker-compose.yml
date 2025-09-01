@@ -83,9 +83,12 @@ services:
       - DEBUG=false
       - LOG_LEVEL=INFO
       - RELOAD=false
+      # 로깅 관련 환경 변수
+      - PYTHONUNBUFFERED=1
+      - LOG_TO_FILE=true
     volumes:
       - ./CoE-Backend/flows:/app/flows
-      - /coe/backend/log:/app/logs
+      - ./CoE-Backend/logs:/app/logs
     depends_on:
       - chroma
       - mariadb
@@ -99,17 +102,19 @@ services:
         max-size: "10m"
         max-file: "3"
         labels: "service=coe-backend"
+    # 로그 파일 생성을 위한 추가 설정
+    user: "1000:1000"  # 호스트 사용자 ID로 실행
     # healthcheck:
     #   test: ["CMD", "sh", "-c", "exec 3<>/dev/tcp/localhost/8000"]
     #   interval: 30s
     #   timeout: 10s
     #   retries: 3
 
-  coe-rag-pipeline:
+  coe-ragpipeline:
     build:
       context: ./CoE-RagPipeline
       dockerfile: Dockerfile
-    container_name: coe-rag-pipeline
+    container_name: coe-ragpipeline
     ports:
       - "8001:8001"
     env_file:
@@ -129,7 +134,7 @@ services:
     volumes:
       - ./CoE-RagPipeline/output:/app/output
       - ./CoE-RagPipeline/chroma_db:/app/chroma_db
-      - /coe/ragpipeline/log:/app/logs
+      - ./CoE-RagPipeline/logs:/app/logs
     depends_on:
       - chroma
       - mariadb
@@ -142,7 +147,7 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-        labels: "service=coe-rag-pipeline"
+        labels: "service=coe-ragpipeline"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
       interval: 30s

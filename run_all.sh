@@ -41,12 +41,16 @@ show_usage() {
 
 # Docker Compose 명령어 결정
 get_docker_compose_cmd() {
-    if docker compose version &> /dev/null; then
-        echo "docker compose"
-    elif docker-compose version &> /dev/null; then
-        echo "docker-compose"
+    if command -v docker &> /dev/null; then
+        if docker compose version &> /dev/null; then
+            echo "docker compose"
+        elif docker-compose version &> /dev/null; then
+            echo "docker-compose"
+        else
+            echo ""
+        fi
     else
-        echo ""
+        echo "" # Docker command not found
     fi
 }
 
@@ -55,17 +59,19 @@ check_docker() {
     DOCKER_COMPOSE_CMD=$(get_docker_compose_cmd)
 
     if ! command -v docker &> /dev/null; then
-        log_error "Docker가 설치되지 않았습니다. 먼저 설치해주세요."
+        log_error "❌ Docker 명령어를 찾을 수 없습니다. Docker가 설치되어 있고 PATH에 추가되었는지 확인해주세요."
         exit 1
     fi
 
     if [ -z "$DOCKER_COMPOSE_CMD" ]; then
-        log_error "Docker Compose (v1 또는 v2)가 설치되지 않았습니다. 먼저 설치해주세요."
+        log_error "❌ Docker Compose (v1 또는 v2) 명령어를 찾을 수 없습니다. Docker Compose가 설치되어 있는지 확인해주세요."
+        log_error "  - Docker Desktop 사용 시: 'docker compose' (v2)가 기본 포함됩니다."
+        log_error "  - 독립형 설치 시: 'docker-compose' (v1) 또는 'docker compose' (v2)를 설치해야 합니다."
         exit 1
     fi
     
     if ! docker info &> /dev/null; then
-        log_error "Docker가 실행되고 있지 않습니다. Docker를 시작해주세요."
+        log_error "❌ Docker 데몬이 실행되고 있지 않습니다. Docker 애플리케이션을 시작해주세요."
         exit 1
     fi
 }
