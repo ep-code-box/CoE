@@ -90,6 +90,16 @@ services:
     volumes:
       - ./CoE-Backend/flows:/app/flows
       - ./CoE-Backend/logs:/app/logs
+    command: >
+      bash -c "
+        TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S);
+        LOG_FILE=/app/logs/app.log;
+        if [ -f $$LOG_FILE ]; then
+          mv $$LOG_FILE $${LOG_FILE}.$${TIMESTAMP}.bak;
+          echo 'Backed up log file to $${LOG_FILE}.$${TIMESTAMP}.bak';
+        fi;
+        /app/scripts/setup_logs.sh && exec uvicorn main:app --host 0.0.0.0 --port 8000
+      "
     depends_on:
       - chroma
       - mariadb
@@ -138,6 +148,16 @@ services:
       - ./CoE-RagPipeline/output:/app/output
       - ./CoE-RagPipeline/chroma_db:/app/chroma_db
       - ./CoE-RagPipeline/logs:/app/logs
+    command: >
+      bash -c "
+        TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S);
+        LOG_FILE=/app/logs/app.log;
+        if [ -f $$LOG_FILE ]; then
+          mv $$LOG_FILE $${LOG_FILE}.$${TIMESTAMP}.bak;
+          echo 'Backed up log file to $${LOG_FILE}.$${TIMESTAMP}.bak';
+        fi;
+        /app/scripts/setup_logs.sh && exec uvicorn main:app --host 0.0.0.0 --port 8001
+      "
     depends_on:
       - chroma
       - mariadb
