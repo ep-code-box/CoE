@@ -94,6 +94,7 @@ services:
       - chroma
       - mariadb
       - redis
+      - coe-ragpipeline
     restart: always
     networks:
       - coe-network
