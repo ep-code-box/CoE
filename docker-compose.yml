@@ -80,6 +80,7 @@ services:
       - REDIS_PORT=6379
       - LANGFLOW_HOST=langflow
       - LANGFLOW_PORT=7860
+      - RAG_PIPELINE_URL=http://host.docker.internal:8001
       - APP_ENV=production
       - DEBUG=false
       - LOG_LEVEL=DEBUG
@@ -90,24 +91,15 @@ services:
     volumes:
       - ./CoE-Backend/flows:/app/flows
       - ./CoE-Backend/logs:/app/logs
-    command: >
-      bash -c "
-        TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S);
-        LOG_DIR=/app/logs;
-        for LOG_FILE in $$LOG_DIR/*.log; do
-          if [ -f $$LOG_FILE ]; then
-            BACKUP_FILE=$${LOG_FILE}.$${TIMESTAMP}.bak;
-            mv $$LOG_FILE $$BACKUP_FILE;
-            echo \"Backed up $$LOG_FILE to $$BACKUP_FILE\";
-          fi;
-        done;
-        /app/scripts/setup_logs.sh && exec uvicorn main:app --host 0.0.0.0 --port 8000
-      "
     depends_on:
-      - chroma
-      - mariadb
-      - redis
-      - coe-ragpipeline
+      chroma:
+        condition: service_started
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      coe-ragpipeline:
+        condition: service_healthy
     restart: always
     networks:
       - coe-network
@@ -117,13 +109,8 @@ services:
         max-size: "10m"
         max-file: "3"
         labels: "service=coe-backend"
-    # 로그 파일 생성을 위한 추가 설정 (권한 문제 해결)
-    # user: "1000:1000"  # 주석 처리하여 권한 문제 방지
-    # healthcheck:
-    #   test: ["CMD", "sh", "-c", "exec 3<>/dev/tcp/localhost/8000"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   coe-ragpipeline:
     build:
@@ -151,23 +138,13 @@ services:
       - ./CoE-RagPipeline/output:/app/output
       - ./CoE-RagPipeline/chroma_db:/app/chroma_db
       - ./CoE-RagPipeline/logs:/app/logs
-    command: >
-      bash -c "
-        TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S);
-        LOG_DIR=/app/logs;
-        for LOG_FILE in $$LOG_DIR/*.log; do
-          if [ -f $$LOG_FILE ]; then
-            BACKUP_FILE=$${LOG_FILE}.$${TIMESTAMP}.bak;
-            mv $$LOG_FILE $$BACKUP_FILE;
-            echo \"Backed up $$LOG_FILE to $$BACKUP_FILE\";
-          fi;
-        done;
-        /app/scripts/setup_logs.sh && exec uvicorn main:app --host 0.0.0.0 --port 8001
-      "
     depends_on:
-      - chroma
-      - mariadb
-      - redis
+      chroma:
+        condition: service_started
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: always
     networks:
       - coe-network
