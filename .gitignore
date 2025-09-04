@@ -18,3 +18,4 @@ CoE-Cli
 node_modules
 .continue
 .pytest_cache
+chat.list

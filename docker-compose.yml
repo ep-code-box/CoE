@@ -59,18 +59,30 @@ services:
       timeout: 10s
       retries: 3
 
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80" # Map host port 80 to container port 80
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro # Mount our custom nginx.conf
+    depends_on:
+      - coe-backend # Nginx depends on coe-backend being up
+    networks:
+      - coe-network
+    restart: always
+
   # 애플리케이션 서비스들
   coe-backend:
     build:
       context: ./CoE-Backend
       dockerfile: Dockerfile
     container_name: coe-backend
-    ports:
-      - "8000:8000"
     env_file:
       - ./CoE-Backend/.env
     environment:
       - TZ=Asia/Seoul
+      - RUN_MIGRATIONS=${RUN_MIGRATIONS:-false}
       # Docker 환경 오버라이드
       - DB_HOST=mariadb
       - DB_PORT=3306
@@ -123,6 +135,7 @@ services:
       - ./CoE-RagPipeline/.env
     environment:
       - TZ=Asia/Seoul
+      - RUN_MIGRATIONS=${RUN_MIGRATIONS:-false}
       # Docker 환경 오버라이드
       - DB_HOST=mariadb
       - DB_PORT=3306

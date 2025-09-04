@@ -117,3 +117,8 @@ graph TD
     # 특정 서비스 로그 확인
     docker-compose logs -f coe-backend
     ```
+
+## 6. 운영/마이그레이션 가이드
+
+- 기본적으로 DB 마이그레이션은 스킵됩니다. 운영 배포 시에만 활성화하여 적용하세요.
+- 자세한 운영 절차와 옵션은 `docs/OPERATIONS.md`를 참고하세요.
