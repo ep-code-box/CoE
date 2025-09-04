@@ -18,6 +18,51 @@
   - RagPipeline: `cp CoE-RagPipeline/.env.example CoE-RagPipeline/.env`
   - 실제 키는 `__REPLACE_ME__` 항목 교체 후, `.gitignore`에 의해 추적 제외됨
 
+## 환경 파일 관리 (.env)
+
+- 커밋 금지: 모든 `.env*`는 `.gitignore`로 무시됩니다. 실제 키/토큰은 레포에 올리지 않습니다.
+- 예시 파일: 각 서비스에 `.env.example`가 있으니 복사해 사용하세요.
+  - Dev/Prod 생성 예:
+    - `cp CoE-Backend/.env.example CoE-Backend/.env.dev`
+    - `cp CoE-Backend/.env.example CoE-Backend/.env.prod`
+    - `cp CoE-RagPipeline/.env.example CoE-RagPipeline/.env.dev`
+    - `cp CoE-RagPipeline/.env.example CoE-RagPipeline/.env.prod`
+- 필수 키 입력: `SKAX_API_KEY`, `OPENAI_API_KEY`, `JWT_SECRET_KEY` 등은 실제 값으로 교체 필요
+- Compose 오버라이드: 완전 격리 스택(`*.full.yml`) 사용 시 DB/Chroma/Redis 접속값은 compose가 덮어쓰므로 `.env` 기본값 그대로 둬도 무방합니다.
+
+## 비밀 유출 대응 (GitHub Push Protection 차단 시)
+
+증상: push 시 "Push cannot contain secrets"로 차단되는 경우.
+
+1) 현재 워킹 트리에서 `.env` 추적 해제(이미 적용된 경우 건너뜀)
+```
+files=(.env .env.dev .env.prod .env.local \
+       CoE-Backend/.env CoE-Backend/.env.dev CoE-Backend/.env.prod CoE-Backend/.env.local \
+       CoE-RagPipeline/.env CoE-RagPipeline/.env.dev CoE-RagPipeline/.env.prod CoE-RagPipeline/.env.local)
+for f in $files; do
+  if git ls-files --error-unmatch "$f" >/dev/null 2>&1; then
+    git rm --cached "$f"
+  fi
+done
+git add -A && git commit -m "chore: untrack env files and add .env.example templates"
+```
+
+2) 여전히 차단되면(과거 커밋에 비밀 존재), 히스토리에서 `.env` 제거
+- 설치(택1): `brew install git-filter-repo` 혹은 `pipx install git-filter-repo`
+- 실행(레포 루트):
+```
+git filter-repo --force \
+  --path .env --path .env.dev --path .env.prod --path .env.local \
+  --path CoE-Backend/.env --path CoE-Backend/.env.dev --path CoE-Backend/.env.prod --path CoE-Backend/.env.local \
+  --path CoE-RagPipeline/.env --path CoE-RagPipeline/.env.dev --path CoE-RagPipeline/.env.prod --path CoE-RagPipeline/.env.local \
+  --invert-paths
+# origin이 제거되므로 재등록 후 강제 푸시
+git remote add origin <원격URL>
+git push --force -u origin main
+```
+
+3) 키 회전: 노출된 `OPENAI_API_KEY`/`SKAX_API_KEY`/`JWT_SECRET_KEY`는 즉시 폐기·재발급하여 교체하세요.
+
 ## 파일 구조 요약
 - `docker-compose.yml`: 공통 인프라/서비스 정의
 - `docker-compose.local.yml`: 로컬 개발용 오버라이드 (핫리로드, 코드 바인드, 마이그 OFF)
