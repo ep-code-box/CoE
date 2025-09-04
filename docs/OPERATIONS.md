@@ -45,8 +45,10 @@ RUN_MIGRATIONS=true ./run.sh   # 적용
 - RagPipeline는 Docker 기동 기반을 권장
 
 ## 상태 확인
-- RAG: `GET http://localhost:8001/health`
-- Backend: `GET http://localhost:8000/health`
+- Backend (Nginx 경유): `GET http://localhost/health`
+- RAG (선택):
+  - Nginx 경유: `GET http://localhost/rag/health`
+  - 직접 접근: `GET http://localhost:8001/health`
 
 ## 주의 및 베스트프랙티스
 - 초기 리비전에서 테이블/인덱스 대량 드롭/생성이 포함된 마이그는 운영 DB에 위험할 수 있습니다.
@@ -66,4 +68,3 @@ RUN_MIGRATIONS=true ./run.sh   # 적용
 ## 참고
 - Backend, RagPipeline 컨테이너는 `RUN_MIGRATIONS`를 인지하도록 Dockerfile/run.sh에 반영됨.
 - docker-compose 로그에서 `Running Alembic migrations...` 또는 `Skipping Alembic migrations` 메시지로 동작 확인 가능.
-

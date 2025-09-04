@@ -4,15 +4,18 @@ CoE 프로젝트의 두 서비스 모두 **Swagger UI**를 통해 API를 쉽게 
 
 ## 🔗 Swagger UI 접근 경로
 
-### CoE-Backend (포트 8000)
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc  
-- **OpenAPI JSON**: http://localhost:8000/openapi.json
+### CoE-Backend (Nginx 프록시)
+- **Swagger UI**: http://localhost/docs
+- **ReDoc**: http://localhost/redoc  
+- **OpenAPI JSON**: http://localhost/openapi.json
 
-### CoE-RagPipeline (포트 8001)
-- **Swagger UI**: http://localhost:8001/docs
-- **ReDoc**: http://localhost:8001/redoc
-- **OpenAPI JSON**: http://localhost:8001/openapi.json
+### CoE-RagPipeline (포트 8001, Nginx 프록시 제공)
+- **Swagger UI (직접 접근)**: http://localhost:8001/docs
+- **ReDoc (직접 접근)**: http://localhost:8001/redoc
+- **OpenAPI JSON (직접 접근)**: http://localhost:8001/openapi.json
+- **Swagger UI (Nginx 경유)**: http://localhost/rag/docs
+- **ReDoc (Nginx 경유)**: http://localhost/rag/redoc
+- **OpenAPI JSON (Nginx 경유)**: http://localhost/rag/openapi.json
 
 ## 🚀 주요 기능
 

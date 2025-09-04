@@ -101,21 +101,21 @@ graph TD
 3.  **Docker Compose 실행**:
     ```bash
     # 모든 서비스 빌드 및 백그라운드 실행
-    docker-compose up --build -d
+    docker compose up --build -d
     ```
 
 4.  **서비스 중지**:
     ```bash
-    docker-compose down
+    docker compose down
     ```
 
 5.  **로그 확인**:
     ```bash
     # 전체 로그 확인
-    docker-compose logs -f
+    docker compose logs -f
 
     # 특정 서비스 로그 확인
-    docker-compose logs -f coe-backend
+    docker compose logs -f coe-backend
     ```
 
 ## 6. 운영/마이그레이션 가이드

@@ -1,0 +1,42 @@
+services:
+  coe-backend:
+    env_file:
+      - ./CoE-Backend/.env.dev
+    environment:
+      - APP_ENV=development
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - RELOAD=false
+      - RUN_MIGRATIONS=true
+      - RAG_PIPELINE_URL=http://host.docker.internal:18003
+      - DB_HOST=host.docker.internal
+      - DB_PORT=6667
+      - CHROMA_HOST=host.docker.internal
+      - CHROMA_PORT=6666
+      - REDIS_HOST=host.docker.internal
+      - REDIS_PORT=6669
+    ports:
+      - "127.0.0.1:18002:8000"  # dev backend exposed only to host
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  coe-ragpipeline:
+    env_file:
+      - ./CoE-RagPipeline/.env.dev
+    environment:
+      - APP_ENV=development
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - RELOAD=false
+      - RUN_MIGRATIONS=true
+      - DB_HOST=host.docker.internal
+      - DB_PORT=6667
+      - CHROMA_HOST=host.docker.internal
+      - CHROMA_PORT=6666
+      - REDIS_HOST=host.docker.internal
+      - REDIS_PORT=6669
+    ports:
+      - "127.0.0.1:18003:8001"  # dev rag exposed only to host
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+

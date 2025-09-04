@@ -3,6 +3,10 @@ db/maria/
 db/redis
 .DS_Store
 .env
+.env*
+CoE-Backend/.env*
+CoE-RagPipeline/.env*
+!**/.env.example
 *.pyc
 __pycache__/
 *.pyo

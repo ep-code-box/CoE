@@ -82,7 +82,7 @@ services:
       - ./CoE-Backend/.env
     environment:
       - TZ=Asia/Seoul
-      - RUN_MIGRATIONS=${RUN_MIGRATIONS:-false}
+      - RUN_MIGRATIONS=${RUN_MIGRATIONS:-true}
       # Docker 환경 오버라이드
       - DB_HOST=mariadb
       - DB_PORT=3306
@@ -135,7 +135,7 @@ services:
       - ./CoE-RagPipeline/.env
     environment:
       - TZ=Asia/Seoul
-      - RUN_MIGRATIONS=${RUN_MIGRATIONS:-false}
+      - RUN_MIGRATIONS=${RUN_MIGRATIONS:-true}
       # Docker 환경 오버라이드
       - DB_HOST=mariadb
       - DB_PORT=3306

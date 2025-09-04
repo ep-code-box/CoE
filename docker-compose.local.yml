@@ -1,0 +1,93 @@
+services:
+  nginx:
+    depends_on:
+      - setup-local-ssl
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/local-certs:/etc/nginx/certs/local
+    command: >-
+      sh -c "
+      echo '[nginx] waiting for local self-signed certs...'; \
+      while [ ! -f /etc/nginx/certs/local/fullchain.pem ] || [ ! -f /etc/nginx/certs/local/privkey.pem ]; do \
+        ls -l /etc/nginx/certs/local || true; \
+        sleep 1; \
+      done; \
+      echo '[nginx] certs found. starting...'; \
+      nginx -g 'daemon off;'
+      "
+
+  coe-backend:
+    env_file:
+      - ./CoE-Backend/.env.local
+    environment:
+      - APP_ENV=development
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - RELOAD=true
+      - RUN_MIGRATIONS=false
+      - RAG_PIPELINE_URL=http://coe-ragpipeline:8001
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - CHROMA_HOST=chroma
+      - CHROMA_PORT=8000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./CoE-Backend:/app
+    command: >-
+      sh -c 
+      "/app/scripts/setup_logs.sh && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+
+  coe-ragpipeline:
+    env_file:
+      - ./CoE-RagPipeline/.env.local
+    environment:
+      - APP_ENV=development
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - RELOAD=true
+      - RUN_MIGRATIONS=false
+    volumes:
+      - ./CoE-RagPipeline:/app
+    command: >-
+      sh -c 
+      "/app/scripts/setup_logs.sh && uvicorn main:app --host 0.0.0.0 --port 8001 --reload"
+
+  setup-local-ssl:
+    image: alpine:3
+    container_name: setup-local-ssl
+    volumes:
+      - ./nginx/local-certs:/etc/nginx/certs/local
+    entrypoint: ["/bin/sh","-c"]
+    command: >-
+      "set -e; \
+      apk add --no-cache openssl >/dev/null; \
+      mkdir -p /etc/nginx/certs/local; \
+      if [ ! -f /etc/nginx/certs/local/fullchain.pem ]; then \
+        echo 'Creating local self-signed certificate (localhost, local.greatcoe.cafe24.com)'; \
+        cat > /etc/nginx/certs/local/openssl.cnf <<'EOF'; \
+        [req]\n\
+        distinguished_name=req_distinguished_name\n\
+        x509_extensions=v3_req\n\
+        prompt=no\n\
+        [req_distinguished_name]\n\
+        CN=localhost\n\
+        [v3_req]\n\
+        subjectAltName=@alt_names\n\
+        [alt_names]\n\
+        DNS.1=localhost\n\
+        DNS.2=local.greatcoe.cafe24.com\n\
+        IP.1=127.0.0.1\n\
+        EOF\n; \
+        openssl req -x509 -nodes -newkey rsa:2048 -days 365 \
+          -keyout /etc/nginx/certs/local/privkey.pem \
+          -out /etc/nginx/certs/local/fullchain.pem \
+          -config /etc/nginx/certs/local/openssl.cnf; \
+      else \
+        echo 'Local cert already exists; skipping.'; \
+      fi; \
+      echo 'Done.'; \
+      sleep 1"
