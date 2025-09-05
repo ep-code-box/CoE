@@ -39,29 +39,14 @@ services:
       - "host.docker.internal:host-gateway"
     command: |
       sh -lc '
-        # Wait for prod certs to exist before starting nginx
-        host=greatcoe.cafe24.com
-        echo "[nginx-edge] waiting for initial cert files for $host..."
+        echo "[nginx-edge] waiting for initial cert files for greatcoe.cafe24.com..."
         for i in $(seq 1 60); do
-          if [ -f "/etc/letsencrypt/live/$host/fullchain.pem" ] && [ -f "/etc/letsencrypt/live/$host/privkey.pem" ]; then
-            echo "[nginx-edge] found certs for $host"
+          if [ -f "/etc/letsencrypt/live/greatcoe.cafe24.com/fullchain.pem" ] && [ -f "/etc/letsencrypt/live/greatcoe.cafe24.com/privkey.pem" ]; then
+            echo "[nginx-edge] found certs for greatcoe.cafe24.com"
             break
           fi
           sleep 1
         done
-
-        CERT_SUM="";
-        (
-          while :; do
-            NEW_SUM=$(find /etc/letsencrypt/live -type f -name "*.pem" -exec sha256sum {} + 2>/dev/null | sort | sha256sum || echo "none")
-            if [ "$NEW_SUM" != "$CERT_SUM" ]; then
-              if [ -n "$CERT_SUM" ]; then echo "[nginx-edge] certs changed, reloading..."; nginx -s reload; fi
-              CERT_SUM="$NEW_SUM"
-            fi
-            sleep 30
-          done
-        ) &
-
         exec nginx -g "daemon off;"
       '
     networks: [coe-edge-net]
@@ -117,15 +102,13 @@ services:
     command: |
       set -e
       apk add --no-cache openssl >/dev/null
-      host=greatcoe.cafe24.com
-      dir="/etc/letsencrypt/live/$host"
-      mkdir -p "$dir"
-      if [ ! -f "$dir/fullchain.pem" ]; then
-        echo "Creating temporary self-signed cert for $host"
-        openssl genrsa -out "$dir/privkey.pem" 2048 >/dev/null 2>&1
-        openssl req -new -key "$dir/privkey.pem" -out "$dir/cert.csr" -subj "/CN=$host" >/dev/null 2>&1
-        openssl x509 -req -in "$dir/cert.csr" -signkey "$dir/privkey.pem" -out "$dir/fullchain.pem" -days 3 -sha256 >/dev/null 2>&1
-        rm -f "$dir/cert.csr"
+      mkdir -p /etc/letsencrypt/live/greatcoe.cafe24.com
+      if [ ! -f /etc/letsencrypt/live/greatcoe.cafe24.com/fullchain.pem ]; then
+        echo 'Creating temporary self-signed cert for greatcoe.cafe24.com'
+        openssl genrsa -out /etc/letsencrypt/live/greatcoe.cafe24.com/privkey.pem 2048 >/dev/null 2>&1
+        openssl req -new -key /etc/letsencrypt/live/greatcoe.cafe24.com/privkey.pem -out /etc/letsencrypt/live/greatcoe.cafe24.com/cert.csr -subj "/CN=greatcoe.cafe24.com" >/dev/null 2>&1
+        openssl x509 -req -in /etc/letsencrypt/live/greatcoe.cafe24.com/cert.csr -signkey /etc/letsencrypt/live/greatcoe.cafe24.com/privkey.pem -out /etc/letsencrypt/live/greatcoe.cafe24.com/fullchain.pem -days 3 -sha256 >/dev/null 2>&1
+        rm -f /etc/letsencrypt/live/greatcoe.cafe24.com/cert.csr
       else
         echo 'Existing prod cert found; skipping self-signed (prod).'
       fi
