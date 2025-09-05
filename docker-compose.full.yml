@@ -29,6 +29,7 @@ services:
       - "8080:8080"
     volumes:
       - ./nginx/nginx.edge.conf:/etc/nginx/nginx.conf:ro
+      - /home/greatjlim/projects/logs/nginx:/var/log/nginx
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command: ["nginx","-g","daemon off;"]
@@ -92,6 +93,7 @@ services:
       - RELOAD=false
       - PYTHONUNBUFFERED=1
       - LOG_TO_FILE=true
+      - LOG_DIR=/app/logs
       - RAG_PIPELINE_URL=http://coe-ragpipeline-prod:8001
     depends_on:
       - chroma-prod
@@ -100,6 +102,9 @@ services:
       - coe-ragpipeline-prod
     ports:
       - "18000:8000"
+    volumes:
+      - /home/greatjlim/projects/logs/coe-backend/prod:/app/logs
+    
     networks: [coe-prod-net]
 
   coe-ragpipeline-prod:
@@ -123,12 +128,17 @@ services:
       - DEBUG=false
       - LOG_LEVEL=INFO
       - RELOAD=false
+      - LOG_TO_FILE=true
+      - LOG_DIR=/app/logs
     depends_on:
       - chroma-prod
       - mariadb-prod
       - redis-prod
     ports:
       - "18001:8001"
+    volumes:
+      - /home/greatjlim/projects/logs/coe-ragpipeline/prod:/app/logs
+    
     networks: [coe-prod-net]
 
   # ====================
@@ -186,6 +196,7 @@ services:
       - RELOAD=false
       - PYTHONUNBUFFERED=1
       - LOG_TO_FILE=true
+      - LOG_DIR=/app/logs
       - RAG_PIPELINE_URL=http://coe-ragpipeline-dev:8001
     depends_on:
       - chroma-dev
@@ -194,6 +205,9 @@ services:
       - coe-ragpipeline-dev
     ports:
       - "18002:8000"
+    volumes:
+      - /home/greatjlim/projects/logs/coe-backend/dev:/app/logs
+    
     networks: [coe-dev-net]
 
   coe-ragpipeline-dev:
@@ -216,10 +230,15 @@ services:
       - DEBUG=true
       - LOG_LEVEL=DEBUG
       - RELOAD=false
+      - LOG_TO_FILE=true
+      - LOG_DIR=/app/logs
     depends_on:
       - chroma-dev
       - mariadb-dev
       - redis-dev
     ports:
       - "18003:8001"
+    volumes:
+      - /home/greatjlim/projects/logs/coe-ragpipeline/dev:/app/logs
+    
     networks: [coe-dev-net]

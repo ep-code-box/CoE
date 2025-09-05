@@ -73,3 +73,12 @@ sudo docker compose -f docker-compose.full.yml --profile edge down -p edge
 - 마이그레이션 운영: docs/OPERATIONS.md
 - Swagger/UI: docs/SWAGGER_GUIDE.md
 - cURL 예시 모음: docs/curl-checks.md
+
+로그 경로(호스트)
+- Edge(Nginx): `/home/greatjlim/projects/logs/nginx/` (prod.access.log, dev.access.log 등)
+- Backend:
+  - Prod: `/home/greatjlim/projects/logs/coe-backend/prod/`
+  - Dev: `/home/greatjlim/projects/logs/coe-backend/dev/`
+- RagPipeline:
+  - Prod: `/home/greatjlim/projects/logs/coe-ragpipeline/prod/`
+  - Dev: `/home/greatjlim/projects/logs/coe-ragpipeline/dev/`
