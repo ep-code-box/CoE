@@ -36,19 +36,18 @@ services:
       - ./nginx/certbot/www:/var/www/certbot
       - ./nginx/certbot/conf:/etc/letsencrypt
     entrypoint: ["/bin/sh","-c"]
-    command: >-
-      "trap exit TERM; \
-      echo 'Waiting for nginx-edge to serve ACME challenge...'; sleep 5; \
+    command: |
+      set -e
+      trap 'exit 0' TERM INT
+      echo 'Waiting for nginx-edge to serve ACME challenge...'
+      sleep 5
       certbot certonly --non-interactive --agree-tos \
         --register-unsafely-without-email \
         --webroot -w /var/www/certbot \
-        -d greatcoe.cafe24.com; \
-      certbot certonly --non-interactive --agree-tos \
-        --register-unsafely-without-email \
-        --webroot -w /var/www/certbot \
-        -d dev.greatcoe.cafe24.com; \
-      echo 'Certificates issued (edge). Auto-renew service will keep them updated.'; \
-      sleep infinity"
+        -d greatcoe.cafe24.com \
+        -d dev.greatcoe.cafe24.com
+      echo 'Certificates issued (edge). Auto-renew service will keep them updated.'
+      sleep infinity
 
   certbot-renew-edge:
     image: certbot/certbot:latest
@@ -60,11 +59,11 @@ services:
       - ./nginx/certbot/www:/var/www/certbot
       - ./nginx/certbot/conf:/etc/letsencrypt
     entrypoint: ["/bin/sh","-c"]
-    command: >-
-      "while :; do \
-         certbot renew --webroot -w /var/www/certbot --quiet --keep-until-expiring; \
-         sleep 12h; \
-       done"
+    command: |
+      while :; do
+        certbot renew --webroot -w /var/www/certbot --quiet --keep-until-expiring
+        sleep 12h
+      done
 
   setup-ssl-dummy-edge:
     image: alpine:3
