@@ -162,11 +162,10 @@ git push --force -u origin main
 
 목표: 기존 컨테이너들과 충돌 없이 Dev/Prod를 각자 인프라(MariaDB/Chroma/Redis)까지 완전 격리하고, 단일 Nginx(Edge)로 두 도메인을 프록시합니다.
 
-구성 파일
-- `docker-compose.edge.yml`: Edge Nginx + Certbot (80/443)
-- `nginx/nginx.edge.conf`: Edge 라우팅 (prod→18000/18001, dev→18002/18003)
-- `docker-compose.prod.full.yml`: Prod 풀 스택 (격리 인프라 포함)
-- `docker-compose.dev.full.yml`: Dev 풀 스택 (격리 인프라 포함)
+구성 파일(간소화 권장)
+- 통합: `docker-compose.full.yml` (profiles로 edge/prod/dev 선택)
+- 설정: `nginx/nginx.edge.conf` (prod→18000/18001, dev→18002/18003)
+  - 레거시 파일(`docker-compose.edge.yml`, `docker-compose.prod.full.yml`, `docker-compose.dev.full.yml`)도 유지되지만, 통합 파일 사용을 권장합니다.
 
 포트 맵핑(호스트)
 - Prod: Backend `18000`, Rag `18001`
@@ -177,18 +176,16 @@ git push --force -u origin main
 - DNS: `greatcoe.cafe24.com`, `dev.greatcoe.cafe24.com` → 운영 서버 IP
 - 방화벽: `80`, `443` 오픈
 
-배포 순서(원샷 전환)
+배포 순서(원샷 전환; 통합 compose 사용)
 1) 기존 Nginx 중단 (현재 80/443 점유 중)
    - `docker stop nginx`
 
-2) Prod 풀 스택 기동(마이그 자동)
-   - `docker compose -p coe-prod-full -f docker-compose.prod.full.yml up -d`
+2) 통합 compose로 prod/dev 스택 기동(마이그 자동)
+   - `docker compose -f docker-compose.full.yml --profile prod up -d`
+   - `docker compose -f docker-compose.full.yml --profile dev up -d`
 
-3) Dev 풀 스택 기동(마이그 자동)
-   - `docker compose -p coe-dev-full -f docker-compose.dev.full.yml up -d`
-
-4) Edge(80/443) 기동 + 인증서 발급
-   - `docker compose -p coe-edge -f docker-compose.edge.yml up -d`
+3) Edge(80/443) 기동 + 인증서 발급
+   - `docker compose -f docker-compose.full.yml --profile edge up -d`
    - 발급 로그 확인: `docker logs certbot-edge -n 200`
 
 5) 헬스 체크
@@ -196,7 +193,7 @@ git push --force -u origin main
    - Dev: `curl -I https://dev.greatcoe.cafe24.com`
 
 롤백(필요 시)
-- Edge 중지: `docker compose -p coe-edge -f docker-compose.edge.yml down`
+- Edge 중지: `docker compose -f docker-compose.full.yml --profile edge down`
 - 기존 nginx 재기동: `docker start nginx`
 
 운영 팁

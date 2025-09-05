@@ -111,3 +111,7 @@ curl -sS http://localhost:8001/api/v1/stats | jq .
 - HTTPS 로컬 인증서 사용 시: `curl -k https://localhost/...`
 - Backend 컨테이너 포트(8000)는 직접 노출되지 않습니다. `nginx`를 통해 `http://localhost`로 접근하세요.
 - 모델 설정은 `CoE-Backend/config/models.json`과 `.env`를 참고하세요.
+문서 맵
+- 배포/기동: `docs/DEPLOY.md`
+- 마이그레이션: `docs/OPERATIONS.md`
+- Swagger/UI 경로: `docs/SWAGGER_GUIDE.md`

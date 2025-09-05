@@ -1,5 +1,13 @@
 # CoE (Center of Excellence) AI Platform
 
+문서 맵
+- 배포/기동: `docs/DEPLOY.md` (통합 compose 사용 권장)
+- 마이그레이션 운영: `docs/OPERATIONS.md`
+- Swagger UI 경로/사용: `docs/SWAGGER_GUIDE.md`
+- cURL 예시 모음: `docs/curl-checks.md`
+
+참고: 상세 배포/예시 내용은 위 문서로 모아 중복을 줄였습니다. README는 개요/아키텍처 중심으로 유지합니다.
+
 ## 1. 프로젝트 개요
 
 CoE AI 플랫폼은 AI 기반의 개발 생산성 향상 및 코드 분석을 위한 통합 솔루션입니다.

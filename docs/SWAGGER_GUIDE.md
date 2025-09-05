@@ -2,6 +2,11 @@
 
 CoE 프로젝트의 두 서비스 모두 **Swagger UI**를 통해 API를 쉽게 테스트하고 문서를 확인할 수 있습니다.
 
+문서 맵
+- 배포/기동: `docs/DEPLOY.md`
+- 마이그레이션: `docs/OPERATIONS.md`
+- cURL 예시 모음: `docs/curl-checks.md`
+
 ## 🔗 Swagger UI 접근 경로
 
 ### CoE-Backend (Nginx 프록시)
@@ -55,66 +60,7 @@ CoE 프로젝트의 두 서비스 모두 **Swagger UI**를 통해 API를 쉽게 
 
 ## 🎯 주요 API 테스트 예시
 
-### CoE-Backend 테스트
-
-#### 1. 헬스체크
-```
-GET /health
-```
-
-#### 2. AI 채팅 테스트
-```
-POST /v1/chat/completions
-{
-  "model": "coe-agent-v1",
-  "messages": [
-    {
-      "role": "user", 
-      "content": "안녕하세요! CoE 에이전트를 테스트해보고 싶습니다."
-    }
-  ],
-  "stream": false
-}
-```
-
-#### 3. 코딩 어시스턴트 테스트
-```
-POST /api/coding-assistant/generate
-{
-  "language": "python",
-  "description": "FastAPI 헬스체크 엔드포인트 생성"
-}
-```
-
-### CoE-RagPipeline 테스트
-
-#### 1. Git 분석 시작
-```
-POST /api/v1/analyze
-{
-  "repositories": [
-    {
-      "url": "https://github.com/octocat/Hello-World.git",
-      "branch": "master"
-    }
-  ],
-  "include_ast": true,
-  "include_tech_spec": true,
-  "include_correlation": true
-}
-```
-
-#### 2. 벡터 검색
-```
-POST /api/v1/search
-{
-  "query": "Python 함수 정의",
-  "k": 5,
-  "filter_metadata": {
-    "file_type": "python"
-  }
-}
-```
+자세한 CLI 예시는 `docs/curl-checks.md`에서 관리합니다. Swagger UI에서는 각 엔드포인트의 "Try it out" 버튼으로 동일한 테스트를 수행할 수 있습니다.
 
 ## 🔧 고급 기능
 

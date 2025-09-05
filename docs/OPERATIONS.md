@@ -2,6 +2,11 @@
 
 본 문서는 CoE 시스템(Backend, RagPipeline) 운영 시 데이터베이스 마이그레이션 적용 정책과 실행 방법을 정리합니다.
 
+문서 맵
+- 배포/기동: `docs/DEPLOY.md`
+- Swagger/UI 경로 및 API 둘러보기: `docs/SWAGGER_GUIDE.md`
+- cURL 예시 모음: `docs/curl-checks.md`
+
 ## 기본 정책
 - 기본값은 “마이그레이션 스킵”입니다. 개발·로컬 환경 및 일반 기동 시 Alembic을 자동 실행하지 않습니다.
 - 운영/배포 시점에만 명시적으로 마이그레이션을 실행합니다.

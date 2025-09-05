@@ -1,0 +1,316 @@
+name: coe
+
+networks:
+  coe-edge-net:
+    driver: bridge
+  coe-prod-net:
+    driver: bridge
+  coe-dev-net:
+    driver: bridge
+
+volumes:
+  prod-maria-data:
+  prod-chroma-data:
+  prod-redis-data:
+  dev-maria-data:
+  dev-chroma-data:
+  dev-redis-data:
+
+services:
+  # =====================
+  # Edge (profiles: edge)
+  # =====================
+  nginx-edge:
+    image: nginx:latest
+    container_name: nginx-edge
+    profiles: [edge]
+    depends_on:
+      - setup-ssl-dummy-edge
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.edge.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certbot/www:/var/www/certbot
+      - ./nginx/certbot/conf:/etc/letsencrypt
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: >-
+      sh -c "
+      CERT_SUM=''; \
+      ( while :; do \
+          NEW_SUM=$(find /etc/letsencrypt/live -type f -name '*.pem' -exec sha256sum {} + 2>/dev/null | sort | sha256sum || echo 'none'); \
+          if [ \"$NEW_SUM\" != \"$CERT_SUM\" ]; then \
+            if [ -n \"$CERT_SUM\" ]; then echo '[nginx-edge] certs changed, reloading...'; nginx -s reload; fi; \
+            CERT_SUM=\"$NEW_SUM\"; \
+          fi; \
+          sleep 30; \
+        done ) & \
+      nginx -g 'daemon off;'"
+    networks: [coe-edge-net]
+
+  certbot-edge:
+    image: certbot/certbot:latest
+    container_name: certbot-edge
+    profiles: [edge]
+    depends_on:
+      - nginx-edge
+    volumes:
+      - ./nginx/certbot/www:/var/www/certbot
+      - ./nginx/certbot/conf:/etc/letsencrypt
+    entrypoint: ["/bin/sh","-c"]
+    command: >-
+      "trap exit TERM; \
+      echo 'Waiting for nginx-edge to serve ACME challenge...'; sleep 5; \
+      certbot certonly --non-interactive --agree-tos \
+        --register-unsafely-without-email \
+        --webroot -w /var/www/certbot \
+        -d greatcoe.cafe24.com; \
+      certbot certonly --non-interactive --agree-tos \
+        --register-unsafely-without-email \
+        --webroot -w /var/www/certbot \
+        -d dev.greatcoe.cafe24.com; \
+      echo 'Certificates issued (edge). Auto-renew service will keep them updated.'; \
+      sleep infinity"
+    networks: [coe-edge-net]
+
+  certbot-renew-edge:
+    image: certbot/certbot:latest
+    container_name: certbot-renew-edge
+    profiles: [edge]
+    restart: always
+    depends_on:
+      - nginx-edge
+    volumes:
+      - ./nginx/certbot/www:/var/www/certbot
+      - ./nginx/certbot/conf:/etc/letsencrypt
+    entrypoint: ["/bin/sh","-c"]
+    command: >-
+      "while :; do \
+         certbot renew --webroot -w /var/www/certbot --quiet --keep-until-expiring; \
+         sleep 12h; \
+       done"
+    networks: [coe-edge-net]
+
+  setup-ssl-dummy-edge:
+    image: alpine:3
+    container_name: setup-ssl-dummy-edge
+    profiles: [edge]
+    volumes:
+      - ./nginx/certbot/conf:/etc/letsencrypt
+    entrypoint: ["/bin/sh","-c"]
+    command: >-
+      "set -e; \
+      apk add --no-cache openssl >/dev/null; \
+      mkdir -p /etc/letsencrypt/live/greatcoe.cafe24.com; \
+      if [ ! -f /etc/letsencrypt/live/greatcoe.cafe24.com/fullchain.pem ]; then \
+        echo 'Creating temporary self-signed cert for greatcoe.cafe24.com'; \
+        openssl req -x509 -nodes -newkey rsa:2048 -days 3 \
+          -keyout /etc/letsencrypt/live/greatcoe.cafe24.com/privkey.pem \
+          -out /etc/letsencrypt/live/greatcoe.cafe24.com/fullchain.pem \
+          -subj "/CN=greatcoe.cafe24.com"; \
+      else \
+        echo 'Existing prod cert found; skipping self-signed (prod).'; \
+      fi; \
+      mkdir -p /etc/letsencrypt/live/dev.greatcoe.cafe24.com; \
+      if [ ! -f /etc/letsencrypt/live/dev.greatcoe.cafe24.com/fullchain.pem ]; then \
+        echo 'Creating temporary self-signed cert for dev.greatcoe.cafe24.com'; \
+        openssl req -x509 -nodes -newkey rsa:2048 -days 3 \
+          -keyout /etc/letsencrypt/live/dev.greatcoe.cafe24.com/privkey.pem \
+          -out /etc/letsencrypt/live/dev.greatcoe.cafe24.com/fullchain.pem \
+          -subj "/CN=dev.greatcoe.cafe24.com"; \
+      else \
+        echo 'Existing dev cert found; skipping self-signed (dev).'; \
+      fi; \
+      echo 'Done.'; \
+      sleep 1"
+    networks: [coe-edge-net]
+
+  # =====================
+  # Prod (profiles: prod)
+  # =====================
+  chroma-prod:
+    image: chromadb/chroma:latest
+    container_name: chroma-prod
+    profiles: [prod]
+    volumes:
+      - prod-chroma-data:/data
+    networks: [coe-prod-net]
+
+  mariadb-prod:
+    image: mariadb:latest
+    container_name: mariadb-prod
+    profiles: [prod]
+    environment:
+      - MARIADB_ROOT_PASSWORD=acce
+      - MARIADB_DATABASE=coe_db
+      - MARIADB_USER=coe_user
+      - MARIADB_PASSWORD=coe_password
+    volumes:
+      - prod-maria-data:/var/lib/mysql
+    networks: [coe-prod-net]
+
+  redis-prod:
+    image: redis:7-alpine
+    container_name: redis-prod
+    profiles: [prod]
+    command: redis-server --appendonly yes --requirepass coe_redis_password
+    volumes:
+      - prod-redis-data:/data
+    networks: [coe-prod-net]
+
+  coe-backend-prod:
+    build:
+      context: ./CoE-Backend
+      dockerfile: Dockerfile
+    container_name: coe-backend-prod
+    profiles: [prod]
+    env_file:
+      - ./CoE-Backend/.env.prod
+    environment:
+      - TZ=Asia/Seoul
+      - RUN_MIGRATIONS=true
+      - DB_HOST=mariadb-prod
+      - DB_PORT=3306
+      - CHROMA_HOST=chroma-prod
+      - CHROMA_PORT=8000
+      - REDIS_HOST=redis-prod
+      - REDIS_PORT=6379
+      - APP_ENV=production
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+      - RELOAD=false
+      - PYTHONUNBUFFERED=1
+      - LOG_TO_FILE=true
+      - RAG_PIPELINE_URL=http://coe-ragpipeline-prod:8001
+    depends_on:
+      - chroma-prod
+      - mariadb-prod
+      - redis-prod
+      - coe-ragpipeline-prod
+    ports:
+      - "18000:8000"
+    networks: [coe-prod-net]
+
+  coe-ragpipeline-prod:
+    build:
+      context: ./CoE-RagPipeline
+      dockerfile: Dockerfile
+    container_name: coe-ragpipeline-prod
+    profiles: [prod]
+    env_file:
+      - ./CoE-RagPipeline/.env.prod
+    environment:
+      - TZ=Asia/Seoul
+      - RUN_MIGRATIONS=true
+      - DB_HOST=mariadb-prod
+      - DB_PORT=3306
+      - CHROMA_HOST=chroma-prod
+      - CHROMA_PORT=8000
+      - REDIS_HOST=redis-prod
+      - REDIS_PORT=6379
+      - APP_ENV=production
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+      - RELOAD=false
+    depends_on:
+      - chroma-prod
+      - mariadb-prod
+      - redis-prod
+    ports:
+      - "18001:8001"
+    networks: [coe-prod-net]
+
+  # ====================
+  # Dev (profiles: dev)
+  # ====================
+  chroma-dev:
+    image: chromadb/chroma:latest
+    container_name: chroma-dev
+    profiles: [dev]
+    volumes:
+      - dev-chroma-data:/data
+    networks: [coe-dev-net]
+
+  mariadb-dev:
+    image: mariadb:latest
+    container_name: mariadb-dev
+    profiles: [dev]
+    environment:
+      - MARIADB_ROOT_PASSWORD=acce
+      - MARIADB_DATABASE=coe_db
+      - MARIADB_USER=coe_user
+      - MARIADB_PASSWORD=coe_password
+    volumes:
+      - dev-maria-data:/var/lib/mysql
+    networks: [coe-dev-net]
+
+  redis-dev:
+    image: redis:7-alpine
+    container_name: redis-dev
+    profiles: [dev]
+    command: redis-server --appendonly yes --requirepass coe_redis_password
+    volumes:
+      - dev-redis-data:/data
+    networks: [coe-dev-net]
+
+  coe-backend-dev:
+    build:
+      context: ./CoE-Backend
+    container_name: coe-backend-dev
+    profiles: [dev]
+    env_file:
+      - ./CoE-Backend/.env.dev
+    environment:
+      - TZ=Asia/Seoul
+      - RUN_MIGRATIONS=true
+      - DB_HOST=mariadb-dev
+      - DB_PORT=3306
+      - CHROMA_HOST=chroma-dev
+      - CHROMA_PORT=8000
+      - REDIS_HOST=redis-dev
+      - REDIS_PORT=6379
+      - APP_ENV=development
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - RELOAD=false
+      - PYTHONUNBUFFERED=1
+      - LOG_TO_FILE=true
+      - RAG_PIPELINE_URL=http://coe-ragpipeline-dev:8001
+    depends_on:
+      - chroma-dev
+      - mariadb-dev
+      - redis-dev
+      - coe-ragpipeline-dev
+    ports:
+      - "18002:8000"
+    networks: [coe-dev-net]
+
+  coe-ragpipeline-dev:
+    build:
+      context: ./CoE-RagPipeline
+    container_name: coe-ragpipeline-dev
+    profiles: [dev]
+    env_file:
+      - ./CoE-RagPipeline/.env.dev
+    environment:
+      - TZ=Asia/Seoul
+      - RUN_MIGRATIONS=true
+      - DB_HOST=mariadb-dev
+      - DB_PORT=3306
+      - CHROMA_HOST=chroma-dev
+      - CHROMA_PORT=8000
+      - REDIS_HOST=redis-dev
+      - REDIS_PORT=6379
+      - APP_ENV=development
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - RELOAD=false
+    depends_on:
+      - chroma-dev
+      - mariadb-dev
+      - redis-dev
+    ports:
+      - "18003:8001"
+    networks: [coe-dev-net]
+
