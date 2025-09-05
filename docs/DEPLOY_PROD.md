@@ -4,7 +4,7 @@ This is the minimal, copy-paste guide for production.
 
 Requirements
 - DNS: `greatcoe.cafe24.com` points to this server.
-- Firewall: inbound `80/tcp`, `443/tcp` open.
+- Firewall: inbound `80/tcp` open. (HTTPS not used)
 
 Start (one-shot cutover)
 1) Stop any existing Nginx on 80/443
@@ -13,12 +13,11 @@ Start (one-shot cutover)
 2) Start prod stack (isolated infra)
    - `docker compose -f docker-compose.full.yml --profile prod up -d`
 
-3) Start edge (reverse proxy + certs)
+3) Start edge (reverse proxy, HTTP only)
    - `docker compose -f docker-compose.full.yml --profile edge up -d`
-   - Check: `docker logs certbot-edge -n 200`
 
 4) Health checks
-   - `curl -I https://greatcoe.cafe24.com`
+   - `curl -I http://greatcoe.cafe24.com`
 
 Runtime layout
 - Prod backend: host `:18000`
@@ -27,7 +26,6 @@ Runtime layout
 
 Common ops
 - Reload Nginx: `docker exec nginx-edge nginx -s reload`
-- Renew logs: `docker logs certbot-renew-edge -n 100`
 - Migrations (if needed):
   - `docker compose -f docker-compose.full.yml exec coe-backend-prod alembic upgrade head`
   - `docker compose -f docker-compose.full.yml exec coe-ragpipeline-prod alembic upgrade head`
@@ -35,4 +33,3 @@ Common ops
 Rollback
 - `docker compose -f docker-compose.full.yml --profile edge down`
 - `docker start nginx` (old)
-

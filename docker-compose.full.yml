@@ -24,97 +24,17 @@ services:
     image: nginx:latest
     container_name: nginx-edge
     profiles: [edge]
-    depends_on:
-      - setup-ssl-dummy-edge
     ports:
       - "80:80"
-      - "443:443"
       - "8080:8080"
-      - "8443:8443"
     volumes:
       - ./nginx/nginx.edge.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/certbot/www:/var/www/certbot
-      - ./nginx/certbot/conf:/etc/letsencrypt
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    command: |
-      sh -lc '
-        echo "[nginx-edge] waiting for initial cert files for greatcoe.cafe24.com..."
-        for i in $(seq 1 60); do
-          if [ -f "/etc/letsencrypt/live/greatcoe.cafe24.com/fullchain.pem" ] && [ -f "/etc/letsencrypt/live/greatcoe.cafe24.com/privkey.pem" ]; then
-            echo "[nginx-edge] found certs for greatcoe.cafe24.com"
-            break
-          fi
-          sleep 1
-        done
-        exec nginx -g "daemon off;"
-      '
+    command: ["nginx","-g","daemon off;"]
     networks: [coe-edge-net]
 
-  certbot-edge:
-    image: certbot/certbot:latest
-    container_name: certbot-edge
-    profiles: [edge]
-    depends_on:
-      - nginx-edge
-    volumes:
-      - ./nginx/certbot/www:/var/www/certbot
-      - ./nginx/certbot/conf:/etc/letsencrypt
-    entrypoint: ["/bin/sh","-c"]
-    command: |
-      set -e
-      trap 'exit 0' TERM INT
-      echo 'Waiting for nginx-edge to serve ACME challenge...'
-      sleep 5
-      certbot certonly --non-interactive --agree-tos \
-        --register-unsafely-without-email \
-        --webroot -w /var/www/certbot \
-        -d greatcoe.cafe24.com
-      echo 'Certificates issued (edge). Auto-renew service will keep them updated.'
-      sleep infinity
-    networks: [coe-edge-net]
-
-  certbot-renew-edge:
-    image: certbot/certbot:latest
-    container_name: certbot-renew-edge
-    profiles: [edge]
-    restart: always
-    depends_on:
-      - nginx-edge
-    volumes:
-      - ./nginx/certbot/www:/var/www/certbot
-      - ./nginx/certbot/conf:/etc/letsencrypt
-    entrypoint: ["/bin/sh","-c"]
-    command: >-
-      "while :; do \
-         certbot renew --webroot -w /var/www/certbot --quiet --keep-until-expiring; \
-         sleep 12h; \
-       done"
-    networks: [coe-edge-net]
-
-  setup-ssl-dummy-edge:
-    image: alpine:3
-    container_name: setup-ssl-dummy-edge
-    profiles: [edge]
-    volumes:
-      - ./nginx/certbot/conf:/etc/letsencrypt
-    entrypoint: ["/bin/sh","-c"]
-    command: |
-      set -e
-      apk add --no-cache openssl >/dev/null
-      mkdir -p /etc/letsencrypt/live/greatcoe.cafe24.com
-      if [ ! -f /etc/letsencrypt/live/greatcoe.cafe24.com/fullchain.pem ]; then
-        echo 'Creating temporary self-signed cert for greatcoe.cafe24.com'
-        openssl genrsa -out /etc/letsencrypt/live/greatcoe.cafe24.com/privkey.pem 2048 >/dev/null 2>&1
-        openssl req -new -key /etc/letsencrypt/live/greatcoe.cafe24.com/privkey.pem -out /etc/letsencrypt/live/greatcoe.cafe24.com/cert.csr -subj "/CN=greatcoe.cafe24.com" >/dev/null 2>&1
-        openssl x509 -req -in /etc/letsencrypt/live/greatcoe.cafe24.com/cert.csr -signkey /etc/letsencrypt/live/greatcoe.cafe24.com/privkey.pem -out /etc/letsencrypt/live/greatcoe.cafe24.com/fullchain.pem -days 3 -sha256 >/dev/null 2>&1
-        rm -f /etc/letsencrypt/live/greatcoe.cafe24.com/cert.csr
-      else
-        echo 'Existing prod cert found; skipping self-signed (prod).'
-      fi
-      echo 'Done.'
-      sleep 1
-    networks: [coe-edge-net]
+  # Removed certbot/ssl-dummy for HTTP-only setup
 
   # =====================
   # Prod (profiles: prod)
