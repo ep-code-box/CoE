@@ -18,9 +18,9 @@ services:
       CERT_SUM=''; \
       ( while :; do \
           NEW_SUM=$(find /etc/letsencrypt/live -type f -name '*.pem' -exec sha256sum {} + 2>/dev/null | sort | sha256sum || echo 'none'); \
-          if [ \"$NEW_SUM\" != \"$CERT_SUM\" ]; then \
-            if [ -n \"$CERT_SUM\" ]; then echo '[nginx-edge] certs changed, reloading...'; nginx -s reload; fi; \
-            CERT_SUM=\"$NEW_SUM\"; \
+          if [ \"$$NEW_SUM\" != \"$$CERT_SUM\" ]; then \
+            if [ -n \"$$CERT_SUM\" ]; then echo '[nginx-edge] certs changed, reloading...'; nginx -s reload; fi; \
+            CERT_SUM=\"$$NEW_SUM\"; \
           fi; \
           sleep 30; \
         done ) & \
