@@ -51,6 +51,12 @@ services:
     volumes:
       - /home/greatjlim/projects/db/prod/mariadb:/var/lib/mysql
     networks: [coe-prod-net]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pacce"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
 
   redis-prod:
     image: redis:7-alpine
@@ -85,10 +91,14 @@ services:
       - LOG_DIR=/app/logs
       - RAG_PIPELINE_URL=http://coe-ragpipeline-prod:8001
     depends_on:
-      - chroma-prod
-      - mariadb-prod
-      - redis-prod
-      - coe-ragpipeline-prod
+      mariadb-prod:
+        condition: service_healthy
+      chroma-prod:
+        condition: service_started
+      redis-prod:
+        condition: service_started
+      coe-ragpipeline-prod:
+        condition: service_started
     ports:
       - "18000:8000"
     volumes:
@@ -150,6 +160,12 @@ services:
     volumes:
       - /home/greatjlim/projects/db/dev/mariadb:/var/lib/mysql
     networks: [coe-dev-net]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pacce"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
 
   redis-dev:
     image: redis:7-alpine
@@ -183,10 +199,14 @@ services:
       - LOG_DIR=/app/logs
       - RAG_PIPELINE_URL=http://coe-ragpipeline-dev:8001
     depends_on:
-      - chroma-dev
-      - mariadb-dev
-      - redis-dev
-      - coe-ragpipeline-dev
+      mariadb-dev:
+        condition: service_healthy
+      chroma-dev:
+        condition: service_started
+      redis-dev:
+        condition: service_started
+      coe-ragpipeline-dev:
+        condition: service_started
     ports:
       - "18002:8000"
     volumes:
