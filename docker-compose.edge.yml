@@ -13,18 +13,34 @@ services:
       - ./nginx/certbot/conf:/etc/letsencrypt
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    command: >-
-      sh -c "
-      CERT_SUM=''; \
-      ( while :; do \
-          NEW_SUM=$(find /etc/letsencrypt/live -type f -name '*.pem' -exec sha256sum {} + 2>/dev/null | sort | sha256sum || echo 'none'); \
-          if [ \"$$NEW_SUM\" != \"$$CERT_SUM\" ]; then \
-            if [ -n \"$$CERT_SUM\" ]; then echo '[nginx-edge] certs changed, reloading...'; nginx -s reload; fi; \
-            CERT_SUM=\"$$NEW_SUM\"; \
-          fi; \
-          sleep 30; \
-        done ) & \
-      nginx -g 'daemon off;'"
+    command: |
+      sh -lc '
+        # Wait for dummy/self-signed certs to exist before starting nginx
+        for host in greatcoe.cafe24.com dev.greatcoe.cafe24.com; do
+          echo "[nginx-edge] waiting for initial cert files for $host..."
+          for i in $(seq 1 60); do
+            if [ -f "/etc/letsencrypt/live/$host/fullchain.pem" ] && [ -f "/etc/letsencrypt/live/$host/privkey.pem" ]; then
+              echo "[nginx-edge] found certs for $host"
+              break
+            fi
+            sleep 1
+          done
+        done
+
+        CERT_SUM="";
+        (
+          while :; do
+            NEW_SUM=$(find /etc/letsencrypt/live -type f -name "*.pem" -exec sha256sum {} + 2>/dev/null | sort | sha256sum || echo "none")
+            if [ "$NEW_SUM" != "$CERT_SUM" ]; then
+              if [ -n "$CERT_SUM" ]; then echo "[nginx-edge] certs changed, reloading..."; nginx -s reload; fi
+              CERT_SUM="$NEW_SUM"
+            fi
+            sleep 30
+          done
+        ) &
+
+        exec nginx -g "daemon off;"
+      '
 
   # Optional: enable after cutover to 80/443 for real certificates
   certbot-edge:
