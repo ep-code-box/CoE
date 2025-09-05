@@ -87,28 +87,28 @@ services:
     volumes:
       - ./nginx/certbot/conf:/etc/letsencrypt
     entrypoint: ["/bin/sh","-c"]
-    command: >-
-      "set -e; \
-      apk add --no-cache openssl >/dev/null; \
-      mkdir -p /etc/letsencrypt/live/greatcoe.cafe24.com; \
-      if [ ! -f /etc/letsencrypt/live/greatcoe.cafe24.com/fullchain.pem ]; then \
-        echo 'Creating temporary self-signed cert for greatcoe.cafe24.com'; \
-        openssl req -x509 -nodes -newkey rsa:2048 -days 3 \
-          -keyout /etc/letsencrypt/live/greatcoe.cafe24.com/privkey.pem \
-          -out /etc/letsencrypt/live/greatcoe.cafe24.com/fullchain.pem \
-          -subj "/CN=greatcoe.cafe24.com"; \
-      else \
-        echo 'Existing prod cert found; skipping self-signed (prod).'; \
-      fi; \
-      mkdir -p /etc/letsencrypt/live/dev.greatcoe.cafe24.com; \
-      if [ ! -f /etc/letsencrypt/live/dev.greatcoe.cafe24.com/fullchain.pem ]; then \
-        echo 'Creating temporary self-signed cert for dev.greatcoe.cafe24.com'; \
-        openssl req -x509 -nodes -newkey rsa:2048 -days 3 \
-          -keyout /etc/letsencrypt/live/dev.greatcoe.cafe24.com/privkey.pem \
-          -out /etc/letsencrypt/live/dev.greatcoe.cafe24.com/fullchain.pem \
-          -subj "/CN=dev.greatcoe.cafe24.com"; \
-      else \
-        echo 'Existing dev cert found; skipping self-signed (dev).'; \
-      fi; \
-      echo 'Done.'; \
-      sleep 1"
+    command: |
+      set -e
+      apk add --no-cache openssl >/dev/null
+
+      # helper to create a minimal self-signed cert (non-interactive)
+      gen_self_signed() {
+        host="$1"
+        dir="/etc/letsencrypt/live/$host"
+        mkdir -p "$dir"
+        if [ ! -f "$dir/fullchain.pem" ]; then
+          echo "Creating temporary self-signed cert for $host"
+          openssl genrsa -out "$dir/privkey.pem" 2048 >/dev/null 2>&1
+          openssl req -new -key "$dir/privkey.pem" -out "$dir/cert.csr" -subj "/CN=$host" >/dev/null 2>&1
+          openssl x509 -req -in "$dir/cert.csr" -signkey "$dir/privkey.pem" -out "$dir/fullchain.pem" -days 3 -sha256 >/dev/null 2>&1
+          rm -f "$dir/cert.csr"
+        else
+          echo "Existing cert found; skipping self-signed for $host"
+        fi
+      }
+
+      gen_self_signed greatcoe.cafe24.com
+      gen_self_signed dev.greatcoe.cafe24.com
+
+      echo 'Done.'
+      sleep 1
