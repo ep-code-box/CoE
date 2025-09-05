@@ -16,7 +16,6 @@ services:
   # =====================
   nginx-edge:
     image: nginx:latest
-    container_name: nginx-edge
     profiles: [edge]
     ports:
       - "80:80"
@@ -36,7 +35,6 @@ services:
   # =====================
   chroma-prod:
     image: chromadb/chroma:latest
-    container_name: chroma-prod
     profiles: [prod]
     volumes:
       - /home/greatjlim/projects/db/prod/chroma:/data
@@ -44,7 +42,6 @@ services:
 
   mariadb-prod:
     image: mariadb:latest
-    container_name: mariadb-prod
     profiles: [prod]
     environment:
       - MARIADB_ROOT_PASSWORD=acce
@@ -57,7 +54,6 @@ services:
 
   redis-prod:
     image: redis:7-alpine
-    container_name: redis-prod
     profiles: [prod]
     command: redis-server --appendonly yes --requirepass coe_redis_password
     volumes:
@@ -68,7 +64,6 @@ services:
     build:
       context: ./CoE-Backend
       dockerfile: Dockerfile
-    container_name: coe-backend-prod
     profiles: [prod]
     env_file:
       - ./CoE-Backend/.env.prod
@@ -105,7 +100,6 @@ services:
     build:
       context: ./CoE-RagPipeline
       dockerfile: Dockerfile
-    container_name: coe-ragpipeline-prod
     profiles: [prod]
     env_file:
       - ./CoE-RagPipeline/.env.prod
@@ -140,7 +134,6 @@ services:
   # ====================
   chroma-dev:
     image: chromadb/chroma:latest
-    container_name: chroma-dev
     profiles: [dev]
     volumes:
       - /home/greatjlim/projects/db/dev/chroma:/data
@@ -148,7 +141,6 @@ services:
 
   mariadb-dev:
     image: mariadb:latest
-    container_name: mariadb-dev
     profiles: [dev]
     environment:
       - MARIADB_ROOT_PASSWORD=acce
@@ -161,7 +153,6 @@ services:
 
   redis-dev:
     image: redis:7-alpine
-    container_name: redis-dev
     profiles: [dev]
     command: redis-server --appendonly yes --requirepass coe_redis_password
     volumes:
@@ -171,7 +162,6 @@ services:
   coe-backend-dev:
     build:
       context: ./CoE-Backend
-    container_name: coe-backend-dev
     profiles: [dev]
     env_file:
       - ./CoE-Backend/.env.dev
@@ -207,7 +197,6 @@ services:
   coe-ragpipeline-dev:
     build:
       context: ./CoE-RagPipeline
-    container_name: coe-ragpipeline-dev
     profiles: [dev]
     env_file:
       - ./CoE-RagPipeline/.env.dev
