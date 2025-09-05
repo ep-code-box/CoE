@@ -8,13 +8,7 @@ networks:
   coe-dev-net:
     driver: bridge
 
-volumes:
-  prod-maria-data:
-  prod-chroma-data:
-  prod-redis-data:
-  dev-maria-data:
-  dev-chroma-data:
-  dev-redis-data:
+volumes: {}
 
 services:
   # =====================
@@ -45,7 +39,7 @@ services:
     container_name: chroma-prod
     profiles: [prod]
     volumes:
-      - prod-chroma-data:/data
+      - /home/greatjlim/projects/db/prod/chroma:/data
     networks: [coe-prod-net]
 
   mariadb-prod:
@@ -58,7 +52,7 @@ services:
       - MARIADB_USER=coe_user
       - MARIADB_PASSWORD=coe_password
     volumes:
-      - prod-maria-data:/var/lib/mysql
+      - /home/greatjlim/projects/db/prod/mariadb:/var/lib/mysql
     networks: [coe-prod-net]
 
   redis-prod:
@@ -67,7 +61,7 @@ services:
     profiles: [prod]
     command: redis-server --appendonly yes --requirepass coe_redis_password
     volumes:
-      - prod-redis-data:/data
+      - /home/greatjlim/projects/db/prod/redis:/data
     networks: [coe-prod-net]
 
   coe-backend-prod:
@@ -149,7 +143,7 @@ services:
     container_name: chroma-dev
     profiles: [dev]
     volumes:
-      - dev-chroma-data:/data
+      - /home/greatjlim/projects/db/dev/chroma:/data
     networks: [coe-dev-net]
 
   mariadb-dev:
@@ -162,7 +156,7 @@ services:
       - MARIADB_USER=coe_user
       - MARIADB_PASSWORD=coe_password
     volumes:
-      - dev-maria-data:/var/lib/mysql
+      - /home/greatjlim/projects/db/dev/mariadb:/var/lib/mysql
     networks: [coe-dev-net]
 
   redis-dev:
@@ -171,7 +165,7 @@ services:
     profiles: [dev]
     command: redis-server --appendonly yes --requirepass coe_redis_password
     volumes:
-      - dev-redis-data:/data
+      - /home/greatjlim/projects/db/dev/redis:/data
     networks: [coe-dev-net]
 
   coe-backend-dev:
