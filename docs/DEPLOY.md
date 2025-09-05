@@ -1,15 +1,20 @@
-# CoE 배포 가이드 (Local / Dev / Prod)
+# CoE 배포 인덱스
 
-본 문서는 Local, Dev(dev.greatcoe.cafe24.com), Prod(greatcoe.cafe24.com) 환경에서 CoE 시스템을 기동/중지/배포/인증서 운영하는 방법을 정리합니다.
+배포 가이드의 요약/링크 모음입니다. 환경별 간단 가이드를 참고하세요.
 
-## 개요
-- 구성: `docker-compose.yml`(공통) + 환경별 오버라이드 3종
-- 리버스 프록시: Nginx (Backend `/`, RagPipeline `/rag/`)
-- 인증서: Let’s Encrypt(무료, 이메일 없이) 자동 발급/자동 갱신
+바로가기
+- Prod 배포(간단): `docs/DEPLOY_PROD.md`
+- Dev 배포(간단): `docs/DEPLOY_DEV.md`
+- 마이그레이션 운영: `docs/OPERATIONS.md`
+- Swagger/UI 경로: `docs/SWAGGER_GUIDE.md`
+- cURL 예시 모음: `docs/curl-checks.md`
+
+요약
+- Prod: `greatcoe.cafe24.com` (80/443). Edge가 인증서 자동 발급/갱신.
+- Dev: 동일 도메인 포트 접근(`:8080/8443`), prod 인증서 재사용.
 
 ## 사전 요구 사항
 - DNS
-  - `dev.greatcoe.cafe24.com` → 서버 공인 IP
   - `greatcoe.cafe24.com` → 서버 공인 IP
 - 방화벽: 80/443 포트 외부 개방
 - 로컬(Local)은 HTTPS 미사용(또는 자체서명) 권장
@@ -86,7 +91,7 @@ git push --force -u origin main
   - Backend/RagPipeline: `uvicorn --reload`
   - 소스 디렉토리 바인드 마운트, Alembic 마이그레이션 비활성(RUN_MIGRATIONS=false)
 
-## Dev (dev.greatcoe.cafe24.com)
+## Dev (greatcoe.cafe24.com:8080 / :8443)
 - 기동(최초 인증서 발급 포함)
   - `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build --remove-orphans`
 - 중지/정리
@@ -98,8 +103,8 @@ git push --force -u origin main
   - `docker compose -f docker-compose.yml -f docker-compose.dev.yml build coe-backend`
   - `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d coe-backend`
 - 헬스체크
-  - `curl -I https://dev.greatcoe.cafe24.com/`
-  - `curl -I https://dev.greatcoe.cafe24.com/rag/health`
+  - `curl -I http://greatcoe.cafe24.com:8080/`
+  - `curl -k -I https://greatcoe.cafe24.com:8443/rag/health`
 - 특징
   - Backend/RagPipeline: gunicorn, Alembic 마이그레이션 활성(RUN_MIGRATIONS=true)
   - HTTPS 자동 발급/자동 갱신
@@ -173,7 +178,7 @@ git push --force -u origin main
 - Edge: `80/443`
 
 사전 준비
-- DNS: `greatcoe.cafe24.com`, `dev.greatcoe.cafe24.com` → 운영 서버 IP
+- DNS: `greatcoe.cafe24.com` → 운영 서버 IP (dev는 포트로 접근)
 - 방화벽: `80`, `443` 오픈
 
 배포 순서(원샷 전환; 통합 compose 사용)
@@ -184,13 +189,13 @@ git push --force -u origin main
    - `docker compose -f docker-compose.full.yml --profile prod up -d`
    - `docker compose -f docker-compose.full.yml --profile dev up -d`
 
-3) Edge(80/443) 기동 + 인증서 발급
+3) Edge 기동 + 인증서 발급 (prod만)
    - `docker compose -f docker-compose.full.yml --profile edge up -d`
    - 발급 로그 확인: `docker logs certbot-edge -n 200`
 
 5) 헬스 체크
    - Prod: `curl -I https://greatcoe.cafe24.com`
-   - Dev: `curl -I https://dev.greatcoe.cafe24.com`
+   - Dev: `curl -I http://greatcoe.cafe24.com:8080` 및 `curl -k -I https://greatcoe.cafe24.com:8443`
 
 롤백(필요 시)
 - Edge 중지: `docker compose -f docker-compose.full.yml --profile edge down`

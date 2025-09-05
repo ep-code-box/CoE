@@ -29,24 +29,41 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      - "8080:8080"
+      - "8443:8443"
     volumes:
       - ./nginx/nginx.edge.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/certbot/www:/var/www/certbot
       - ./nginx/certbot/conf:/etc/letsencrypt
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    command: >-
-      sh -c "
-      CERT_SUM=''; \
-      ( while :; do \
-          NEW_SUM=$(find /etc/letsencrypt/live -type f -name '*.pem' -exec sha256sum {} + 2>/dev/null | sort | sha256sum || echo 'none'); \
-          if [ \"$NEW_SUM\" != \"$CERT_SUM\" ]; then \
-            if [ -n \"$CERT_SUM\" ]; then echo '[nginx-edge] certs changed, reloading...'; nginx -s reload; fi; \
-            CERT_SUM=\"$NEW_SUM\"; \
-          fi; \
-          sleep 30; \
-        done ) & \
-      nginx -g 'daemon off;'"
+    command: |
+      sh -lc '
+        # Wait for prod certs to exist before starting nginx
+        host=greatcoe.cafe24.com
+        echo "[nginx-edge] waiting for initial cert files for $host..."
+        for i in $(seq 1 60); do
+          if [ -f "/etc/letsencrypt/live/$host/fullchain.pem" ] && [ -f "/etc/letsencrypt/live/$host/privkey.pem" ]; then
+            echo "[nginx-edge] found certs for $host"
+            break
+          fi
+          sleep 1
+        done
+
+        CERT_SUM="";
+        (
+          while :; do
+            NEW_SUM=$(find /etc/letsencrypt/live -type f -name "*.pem" -exec sha256sum {} + 2>/dev/null | sort | sha256sum || echo "none")
+            if [ "$NEW_SUM" != "$CERT_SUM" ]; then
+              if [ -n "$CERT_SUM" ]; then echo "[nginx-edge] certs changed, reloading..."; nginx -s reload; fi
+              CERT_SUM="$NEW_SUM"
+            fi
+            sleep 30
+          done
+        ) &
+
+        exec nginx -g "daemon off;"
+      '
     networks: [coe-edge-net]
 
   certbot-edge:
@@ -59,19 +76,17 @@ services:
       - ./nginx/certbot/www:/var/www/certbot
       - ./nginx/certbot/conf:/etc/letsencrypt
     entrypoint: ["/bin/sh","-c"]
-    command: >-
-      "trap exit TERM; \
-      echo 'Waiting for nginx-edge to serve ACME challenge...'; sleep 5; \
+    command: |
+      set -e
+      trap 'exit 0' TERM INT
+      echo 'Waiting for nginx-edge to serve ACME challenge...'
+      sleep 5
       certbot certonly --non-interactive --agree-tos \
         --register-unsafely-without-email \
         --webroot -w /var/www/certbot \
-        -d greatcoe.cafe24.com; \
-      certbot certonly --non-interactive --agree-tos \
-        --register-unsafely-without-email \
-        --webroot -w /var/www/certbot \
-        -d dev.greatcoe.cafe24.com; \
-      echo 'Certificates issued (edge). Auto-renew service will keep them updated.'; \
-      sleep infinity"
+        -d greatcoe.cafe24.com
+      echo 'Certificates issued (edge). Auto-renew service will keep them updated.'
+      sleep infinity
     networks: [coe-edge-net]
 
   certbot-renew-edge:
@@ -99,31 +114,23 @@ services:
     volumes:
       - ./nginx/certbot/conf:/etc/letsencrypt
     entrypoint: ["/bin/sh","-c"]
-    command: >-
-      "set -e; \
-      apk add --no-cache openssl >/dev/null; \
-      mkdir -p /etc/letsencrypt/live/greatcoe.cafe24.com; \
-      if [ ! -f /etc/letsencrypt/live/greatcoe.cafe24.com/fullchain.pem ]; then \
-        echo 'Creating temporary self-signed cert for greatcoe.cafe24.com'; \
-        openssl req -x509 -nodes -newkey rsa:2048 -days 3 \
-          -keyout /etc/letsencrypt/live/greatcoe.cafe24.com/privkey.pem \
-          -out /etc/letsencrypt/live/greatcoe.cafe24.com/fullchain.pem \
-          -subj "/CN=greatcoe.cafe24.com"; \
-      else \
-        echo 'Existing prod cert found; skipping self-signed (prod).'; \
-      fi; \
-      mkdir -p /etc/letsencrypt/live/dev.greatcoe.cafe24.com; \
-      if [ ! -f /etc/letsencrypt/live/dev.greatcoe.cafe24.com/fullchain.pem ]; then \
-        echo 'Creating temporary self-signed cert for dev.greatcoe.cafe24.com'; \
-        openssl req -x509 -nodes -newkey rsa:2048 -days 3 \
-          -keyout /etc/letsencrypt/live/dev.greatcoe.cafe24.com/privkey.pem \
-          -out /etc/letsencrypt/live/dev.greatcoe.cafe24.com/fullchain.pem \
-          -subj "/CN=dev.greatcoe.cafe24.com"; \
-      else \
-        echo 'Existing dev cert found; skipping self-signed (dev).'; \
-      fi; \
-      echo 'Done.'; \
-      sleep 1"
+    command: |
+      set -e
+      apk add --no-cache openssl >/dev/null
+      host=greatcoe.cafe24.com
+      dir="/etc/letsencrypt/live/$host"
+      mkdir -p "$dir"
+      if [ ! -f "$dir/fullchain.pem" ]; then
+        echo "Creating temporary self-signed cert for $host"
+        openssl genrsa -out "$dir/privkey.pem" 2048 >/dev/null 2>&1
+        openssl req -new -key "$dir/privkey.pem" -out "$dir/cert.csr" -subj "/CN=$host" >/dev/null 2>&1
+        openssl x509 -req -in "$dir/cert.csr" -signkey "$dir/privkey.pem" -out "$dir/fullchain.pem" -days 3 -sha256 >/dev/null 2>&1
+        rm -f "$dir/cert.csr"
+      else
+        echo 'Existing prod cert found; skipping self-signed (prod).'
+      fi
+      echo 'Done.'
+      sleep 1
     networks: [coe-edge-net]
 
   # =====================
@@ -313,4 +320,3 @@ services:
     ports:
       - "18003:8001"
     networks: [coe-dev-net]
-
