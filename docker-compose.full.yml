@@ -52,11 +52,11 @@ services:
       - /home/greatjlim/projects/db/prod/mariadb:/var/lib/mysql
     networks: [coe-prod-net]
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pacce"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -pacce || exit 1"]
       interval: 5s
-      timeout: 3s
-      retries: 30
-      start_period: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 15s
 
   redis-prod:
     image: redis:7-alpine
@@ -161,11 +161,11 @@ services:
       - /home/greatjlim/projects/db/dev/mariadb:/var/lib/mysql
     networks: [coe-dev-net]
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pacce"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -pacce || exit 1"]
       interval: 5s
-      timeout: 3s
-      retries: 30
-      start_period: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 15s
 
   redis-dev:
     image: redis:7-alpine
