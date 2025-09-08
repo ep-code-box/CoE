@@ -35,16 +35,16 @@ cp CoE-RagPipeline/.env.example CoE-RagPipeline/.env.dev
 # Prod
 cd /home/greatjlim/projects/CoE-prod
 git fetch && git checkout main && git pull --ff-only
-sudo docker compose -f docker-compose.full.yml --profile prod up -d --build -p coe-prod
+sudo docker compose -p coe-prod -f docker-compose.full.yml --profile prod up -d --build 
 
 # Dev
 cd /home/greatjlim/projects/CoE-dev
 git fetch && git checkout develop && git pull --ff-only
-sudo docker compose -f docker-compose.full.yml --profile dev up -d --build -p coe-dev
+sudo docker compose -p coe-dev -f docker-compose.full.yml --profile dev up -d --build 
 
 # Edge (HTTP 프록시, 1회 실행)
 cd /home/greatjlim/projects/CoE-prod
-sudo docker compose -f docker-compose.full.yml --profile edge up -d -p edge
+sudo docker compose -p edge -f docker-compose.full.yml --profile edge up -d 
 ```
 4) 헬스 체크
 ```
