@@ -71,6 +71,7 @@ sudo docker compose -f docker-compose.full.yml --profile edge down -p edge
 
 참고 문서
 - 마이그레이션 운영: docs/OPERATIONS.md
+- 운영 배포 체크리스트: docs/ROLLOUT_CHECKLIST.md
 - Swagger/UI: docs/SWAGGER_GUIDE.md
 - cURL 예시 모음: docs/curl-checks.md
 
