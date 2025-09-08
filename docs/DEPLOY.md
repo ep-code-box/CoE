@@ -74,6 +74,31 @@ sudo docker compose -f docker-compose.full.yml --profile edge down -p edge
 - Swagger/UI: docs/SWAGGER_GUIDE.md
 - cURL 예시 모음: docs/curl-checks.md
 
+## Nginx 재시작/재로드
+
+구성 파일 변경(예: `/rag` → `/rag/` 리다이렉트) 후에는 Nginx 컨테이너를 재시작하거나 설정을 재로드하세요.
+
+일반(기본 compose)
+```
+docker compose restart nginx
+# 또는 설정만 재적용
+docker compose exec nginx nginx -s reload
+```
+
+로컬 개발(`docker-compose.local.yml`)
+```
+docker compose -f docker-compose.local.yml restart nginx
+# 또는
+docker compose -f docker-compose.local.yml exec nginx nginx -s reload
+```
+
+엣지 프록시(Full + profiles: edge)
+```
+docker compose -f docker-compose.full.yml --profile edge restart nginx-edge
+# 또는
+docker compose -f docker-compose.full.yml --profile edge exec nginx-edge nginx -s reload
+```
+
 로그 경로(호스트)
 - Edge(Nginx): `/home/greatjlim/projects/logs/nginx/` (prod.access.log, dev.access.log 등)
 - Backend:
