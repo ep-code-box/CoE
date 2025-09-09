@@ -1,0 +1,120 @@
+{
+  "id": null,
+  "uid": "coe-logs",
+  "title": "CoE Logs (Loki)",
+  "tags": ["coe", "loki", "logs"],
+  "timezone": "",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-15m", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "loki",
+        "current": {"text": "Loki", "value": "Loki"}
+      },
+      {
+        "name": "env",
+        "label": "env",
+        "type": "query",
+        "datasource": {"type": "loki", "uid": "$datasource"},
+        "query": "label_values({job=\"docker\"}, env)",
+        "includeAll": true,
+        "allValue": ".*",
+        "refresh": 2
+      },
+      {
+        "name": "service",
+        "label": "service",
+        "type": "query",
+        "datasource": {"type": "loki", "uid": "$datasource"},
+        "query": "label_values({job=\"docker\", env=~\"$env\"}, service)",
+        "includeAll": true,
+        "allValue": ".*",
+        "refresh": 2
+      },
+      {
+        "name": "compose_project",
+        "label": "project",
+        "type": "query",
+        "datasource": {"type": "loki", "uid": "$datasource"},
+        "query": "label_values({job=\"docker\", env=~\"$env\"}, compose_project)",
+        "includeAll": true,
+        "allValue": ".*",
+        "refresh": 2
+      },
+      {
+        "name": "container",
+        "label": "container",
+        "type": "query",
+        "datasource": {"type": "loki", "uid": "$datasource"},
+        "query": "label_values({job=\"docker\", env=~\"$env\", service=~\"$service\"}, container)",
+        "includeAll": true,
+        "allValue": ".*",
+        "refresh": 2
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "logs",
+      "title": "Live Logs",
+      "gridPos": {"x": 0, "y": 0, "w": 24, "h": 16},
+      "options": {"dedupStrategy": "none", "showTime": true, "wrapLogMessage": true},
+      "targets": [
+        {
+          "refId": "A",
+          "editorMode": "builder",
+          "queryType": "range",
+          "expr": "{job=\\\"docker\\\", env=~\\\"$env\\\", service=~\\\"$service\\\", compose_project=~\\\"$compose_project\\\", container=~\\\"$container\\\"}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Log Volume (count_over_time)",
+      "gridPos": {"x": 0, "y": 16, "w": 12, "h": 8},
+      "fieldConfig": {"defaults": {"unit": "short"}},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (service)(count_over_time({job=\\\"docker\\\", env=~\\\"$env\\\", service=~\\\"$service\\\", compose_project=~\\\"$compose_project\\\", container=~\\\"$container\\\"}[1m]))",
+          "queryType": "range"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "ERROR last 5m",
+      "gridPos": {"x": 12, "y": 16, "w": 12, "h": 8},
+      "options": {"reduceOptions": {"calcs": ["sum"], "fields": "", "values": false}},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({job=\\\"docker\\\", env=~\\\"$env\\\", service=~\\\"$service\\\", compose_project=~\\\"$compose_project\\\", container=~\\\"$container\\\"} |= \\\"ERROR\\\" [5m]))",
+          "queryType": "range"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "bargauge",
+      "title": "Top containers (10m)",
+      "gridPos": {"x": 0, "y": 24, "w": 24, "h": 8},
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(10, sum by(container)(count_over_time({job=\\\"docker\\\", env=~\\\"$env\\\", service=~\\\"$service\\\", compose_project=~\\\"$compose_project\\\"}[10m])))",
+          "queryType": "instant"
+        }
+      ]
+    }
+  ]
+}
+
