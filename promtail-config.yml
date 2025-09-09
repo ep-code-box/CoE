@@ -19,6 +19,12 @@ scrape_configs:
       - docker: {}
 
     relabel_configs:
+      # read each container's json log file
+      - source_labels: ['__meta_docker_container_id']
+        target_label: __path__
+        replacement: /var/lib/docker/containers/$1/*-json.log
+        action: replace
+
       # Default env label to 'local'; later rules may override
       - target_label: env
         replacement: local
