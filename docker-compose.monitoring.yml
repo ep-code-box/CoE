@@ -37,6 +37,11 @@ services:
       - ./promtail-config.yml:/etc/promtail/config.yml:ro
       # Persist positions to avoid re-reading old logs on restart
       - promtail-positions:/positions
+      # Host log directories (prod/dev) used by compose.full.yml
+      - /home/greatjlim/projects/logs:/host-logs:ro
+      # Local compose log dirs (relative to this repo)
+      - ./CoE-Backend/logs:/local-logs/coe-backend:ro
+      - ./CoE-RagPipeline/logs:/local-logs/coe-ragpipeline:ro
     depends_on:
       - loki
     networks: [coe-monitoring-net]

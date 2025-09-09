@@ -73,3 +73,50 @@ scrape_configs:
       - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
         regex: 'loki|promtail|grafana'
         action: drop
+
+  # File-based logs from host (prod/dev) directories
+  - job_name: app_files_prod
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: app_files
+          env: prod
+          service: coe-backend
+          __path__: /host-logs/coe-backend/prod/**/*.log
+      - targets: [localhost]
+        labels:
+          job: app_files
+          env: prod
+          service: coe-ragpipeline
+          __path__: /host-logs/coe-ragpipeline/prod/**/*.log
+
+  - job_name: app_files_dev
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: app_files
+          env: dev
+          service: coe-backend
+          __path__: /host-logs/coe-backend/dev/**/*.log
+      - targets: [localhost]
+        labels:
+          job: app_files
+          env: dev
+          service: coe-ragpipeline
+          __path__: /host-logs/coe-ragpipeline/dev/**/*.log
+
+  # File-based logs from local compose (repo) directories
+  - job_name: app_files_local
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: app_files
+          env: local
+          service: coe-backend
+          __path__: /local-logs/coe-backend/**/*.log
+      - targets: [localhost]
+        labels:
+          job: app_files
+          env: local
+          service: coe-ragpipeline
+          __path__: /local-logs/coe-ragpipeline/**/*.log
