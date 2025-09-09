@@ -1,0 +1,69 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+
+    pipeline_stages:
+      # Parse Docker JSON log format and extract fields
+      - docker: {}
+
+    relabel_configs:
+      # Default env label to 'local'; later rules may override
+      - target_label: env
+        replacement: local
+        action: replace
+
+      # container name (strip leading slash)
+      - source_labels: ['__meta_docker_container_name']
+        target_label: container
+        regex: '/(.*)'
+        replacement: '$1'
+
+      # compose project and service (from Docker labels)
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        target_label: compose_project
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: service
+
+      # derive env from project suffix: coe-(dev|prod|edge)
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        target_label: env
+        regex: '.*-(dev)'
+        replacement: '$1'
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        target_label: env
+        regex: '.*-(prod)'
+        replacement: '$1'
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        target_label: env
+        regex: '.*-(edge)'
+        replacement: '$1'
+
+      # Optional custom labels if present on services
+      - source_labels: ['__meta_docker_container_label_logging_service']
+        target_label: app
+        regex: '(.*)'
+        replacement: '$1'
+      - source_labels: ['__meta_docker_container_label_logging_env']
+        target_label: logging_env
+        regex: '(.*)'
+        replacement: '$1'
+
+      # Drop logs from the monitoring stack itself (reduce noise)
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        regex: 'coe-monitoring'
+        action: drop
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        regex: 'loki|promtail|grafana'
+        action: drop

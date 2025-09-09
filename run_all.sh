@@ -31,12 +31,15 @@ show_usage() {
     echo "사용법: $0 [옵션]"
     echo ""
     echo "옵션:"
-    echo "  full    - Docker Compose를 사용하여 모든 서비스를 실행합니다."
-    echo "  local   - 로컬 개발을 위해 인프라 서비스(DB, ChromaDB 등)만 실행합니다."
+    echo "  full                 - Docker Compose를 사용하여 모든 서비스를 실행합니다."
+    echo "  local                - 로컬 개발을 위해 인프라 서비스(DB, ChromaDB 등)만 실행합니다."
+    echo "  --with-monitoring    - (선택) Loki + Promtail + Grafana 모니터링 스택도 함께 실행합니다."
     echo ""
     echo "예시:"
-    echo "  $0 full    # 모든 서비스를 Docker로 실행"
-    echo "  $0 local   # 인프라만 Docker로 실행"
+    echo "  $0 full                        # 모든 서비스를 Docker로 실행"
+    echo "  $0 local                       # 인프라만 Docker로 실행"
+    echo "  $0 full --with-monitoring      # 전체 + 모니터링 스택 실행"
+    echo "  $0 local --with-monitoring     # 인프라 + 모니터링 스택 실행"
 }
 
 # Docker Compose 명령어 결정
@@ -82,6 +85,14 @@ main() {
     check_docker
     DOCKER_COMPOSE_CMD=$(get_docker_compose_cmd) # 다시 한번 설정하여 main 함수 내에서 사용 가능하게 함
 
+    # 플래그 파싱
+    WITH_MONITORING=false
+    for arg in "$@"; do
+        if [ "$arg" == "--with-monitoring" ]; then
+            WITH_MONITORING=true
+        fi
+    done
+
     # 옵션에 따른 분기 처리
     if [ "$1" == "full" ]; then
         log_info "모든 서비스를 Docker Compose로 시작합니다... (docker-compose.yml)"
@@ -90,12 +101,24 @@ main() {
         echo ""
         $DOCKER_COMPOSE_CMD -f docker-compose.yml ps
 
+        if [ "$WITH_MONITORING" = true ]; then
+            log_info "모니터링 스택(Loki+Promtail+Grafana)을 시작합니다... (docker-compose.monitoring.yml)"
+            $DOCKER_COMPOSE_CMD -f docker-compose.monitoring.yml up -d --build
+            log_success "모니터링 스택이 시작되었습니다. Grafana: http://127.0.0.1:3000  Loki: http://127.0.0.1:3100"
+        fi
+
     elif [ "$1" == "local" ]; then
         log_info "로컬 개발을 위해 인프라 서비스를 시작합니다... (docker-compose.local.yml)"
         $DOCKER_COMPOSE_CMD -f docker-compose.local.yml up -d --build
         log_success "인프라 서비스가 시작되었습니다."
         echo ""
         $DOCKER_COMPOSE_CMD -f docker-compose.local.yml ps
+
+        if [ "$WITH_MONITORING" = true ]; then
+            log_info "모니터링 스택(Loki+Promtail+Grafana)을 시작합니다... (docker-compose.monitoring.yml)"
+            $DOCKER_COMPOSE_CMD -f docker-compose.monitoring.yml up -d --build
+            log_success "모니터링 스택이 시작되었습니다. Grafana: http://127.0.0.1:3000  Loki: http://127.0.0.1:3100"
+        fi
 
     else
         log_error "잘못된 옵션입니다."

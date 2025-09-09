@@ -1,0 +1,48 @@
+name: coe-monitoring
+
+services:
+  loki:
+    image: grafana/loki:2.9.4
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki-data:/loki
+    networks: [coe-monitoring-net]
+
+  grafana:
+    image: grafana/grafana:10.4.1
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/grafana
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - loki
+    networks: [coe-monitoring-net]
+
+  promtail:
+    image: grafana/promtail:2.9.4
+    command: ["-config.file=/etc/promtail/config.yml"]
+    volumes:
+      # Read container logs and Docker metadata
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Promtail configuration
+      - ./promtail-config.yml:/etc/promtail/config.yml:ro
+    depends_on:
+      - loki
+    networks: [coe-monitoring-net]
+
+volumes:
+  loki-data:
+  grafana-data:
+
+networks:
+  coe-monitoring-net:
+    driver: bridge

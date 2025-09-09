@@ -115,3 +115,22 @@ curl -sS http://localhost:8001/api/v1/stats | jq .
 - 배포/기동: `docs/DEPLOY.md`
 - 마이그레이션: `docs/OPERATIONS.md`
 - Swagger/UI 경로: `docs/SWAGGER_GUIDE.md`
+ - 모니터링: `docs/MONITORING.md`
+
+## Monitoring quick checks
+
+- Grafana (local)
+```
+curl -I http://localhost/grafana/
+```
+
+- Grafana (edge)
+```
+curl -I http://greatcoe.cafe24.com/grafana/
+```
+
+- Loki API (optional)
+```
+curl -sS 'http://localhost/loki/loki/api/v1/label/__name__/values' | jq .  # local
+curl -sS 'http://greatcoe.cafe24.com/loki/loki/api/v1/status/build' | jq . # prod edge
+```

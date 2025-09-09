@@ -5,11 +5,17 @@
 요약
 - Prod: http://greatcoe.cafe24.com → prod backend(:18000), /rag/ → prod RAG(:18001)
 - Dev: http://greatcoe.cafe24.com:8080 → dev backend(:18002), /rag/ → dev RAG(:18003)
+- Monitoring: http://greatcoe.cafe24.com/grafana/ (공용 Grafana), /loki/ (옵션: Loki API)
 
 준비
 - DNS: greatcoe.cafe24.com → 서버 공인 IP
 - 방화벽: 80 포트(필수), 8080(선택) 오픈
 - 환경파일: 각 서비스의 .env.example을 복사해 사용(실제 키는 커밋 금지)
+
+one shot.
+
+sudo docker compose -p coe-dev -f docker-compose.full.yml --profile dev build coe-backend-dev && sudo docker compose -p coe-dev -f docker-compose.full.yml --profile dev run --rm coe-backend-dev alembic upgrade head && sudo docker compose -p coe-dev -f docker-compose.full.yml --profile dev up -d coe-backend-dev
+sudo docker compose -p coe-prod -f docker-compose.full.yml --profile prod build coe-backend-prod && sudo docker compose -p coe-prod -f docker-compose.full.yml --profile prod run --rm coe-backend-prod alembic upgrade head && sudo docker compose -p coe-prod -f docker-compose.full.yml --profile prod up -d coe-backend-prod
 
 복사 기반 분리 배포(권장)
 1) 디렉토리 준비(한 번)
@@ -56,24 +62,24 @@ curl -I http://greatcoe.cafe24.com:8080/rag/health
 ```
 # Prod
 cd /home/greatjlim/projects/CoE-prod && git pull --ff-only
-sudo docker compose -f docker-compose.full.yml --profile prod up -d --build -p coe-prod
+sudo docker compose -p coe-prod -f docker-compose.full.yml --profile prod up -d --build
 
 # Dev
 cd /home/greatjlim/projects/CoE-dev && git pull --ff-only
-sudo docker compose -f docker-compose.full.yml --profile dev up -d --build -p coe-dev
+sudo docker compose -p coe-dev -f docker-compose.full.yml --profile dev up -d --build
 ```
 6) 중지/정리
 ```
-sudo docker compose -f docker-compose.full.yml --profile prod down -p coe-prod
-sudo docker compose -f docker-compose.full.yml --profile dev down -p coe-dev
-sudo docker compose -f docker-compose.full.yml --profile edge down -p edge
+sudo docker compose -p coe-prod -f docker-compose.full.yml --profile prod down
+sudo docker compose -p coe-dev  -f docker-compose.full.yml --profile dev  down 
+sudo docker compose -p edge     -f docker-compose.full.yml --profile edge down
 ```
 
 참고 문서
 - 마이그레이션 운영: docs/OPERATIONS.md
-- 운영 배포 체크리스트: docs/ROLLOUT_CHECKLIST.md
 - Swagger/UI: docs/SWAGGER_GUIDE.md
 - cURL 예시 모음: docs/curl-checks.md
+ - 모니터링: docs/MONITORING.md
 
 ## Nginx 재시작/재로드
 
@@ -99,6 +105,21 @@ docker compose -f docker-compose.full.yml --profile edge restart nginx-edge
 # 또는
 docker compose -f docker-compose.full.yml --profile edge exec nginx-edge nginx -s reload
 ```
+
+## 모니터링 스택(Loki/Promtail/Grafana)
+
+한 개의 모니터링 스택이 dev/prod/local 모든 로그를 수집/표시합니다.
+
+- 실행
+  - 모니터링만: `docker compose -f docker-compose.monitoring.yml up -d`
+  - 전체/인프라와 함께: `./run_all.sh full --with-monitoring` 또는 `./run_all.sh local --with-monitoring`
+- 접근 경로
+  - 로컬: `http://localhost/grafana/`
+  - Prod(Edge): `http://greatcoe.cafe24.com/grafana/`
+- 참고
+  - Grafana 기본 계정: `admin/admin` (운영 전 변경 필수)
+  - Loki API는 `/loki/` 경로로 프록시됩니다(필요 시 사용).
+  - 변경 후 Nginx 재시작 필요(위 "Nginx 재시작/재로드" 참조).
 
 로그 경로(호스트)
 - Edge(Nginx): `/home/greatjlim/projects/logs/nginx/` (prod.access.log, dev.access.log 등)
