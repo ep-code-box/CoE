@@ -8,7 +8,9 @@ networks:
   coe-dev-net:
     driver: bridge
 
-volumes: {}
+volumes:
+  nginx-conf-edge:
+  modsec-conf-edge:
 
 services:
   # =====================
@@ -23,6 +25,8 @@ services:
       - "80:80"
       - "8080:8080"
     volumes:
+      - nginx-conf-edge:/etc/nginx
+      - modsec-conf-edge:/etc/modsecurity.d
       # Provide our config as templates the image will render into /etc/nginx/*
       - ./nginx/nginx.edge.conf:/etc/nginx/templates/nginx.conf.template:ro
       - ./nginx/waf/modsecurity-override.conf:/etc/nginx/templates/modsecurity.d/modsecurity-override.conf.template:ro
@@ -38,12 +42,7 @@ services:
       - ALL
     cap_add:
       - NET_BIND_SERVICE
-    tmpfs:
-      - /tmp
-      - /var/cache/nginx
-      - /var/run
-      - /etc/nginx
-      - /etc/modsecurity.d
+    read_only: true
     networks: [coe-edge-net]
 
   # Removed certbot/ssl-dummy for HTTP-only setup
