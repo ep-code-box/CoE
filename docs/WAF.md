@@ -6,9 +6,8 @@ WAF (ModSecurity + OWASP CRS) 적용 가이드
 
 변경 사항 요약
 - 이미지: `nginx-edge` 가 `owasp/modsecurity-crs:nginx` 이미지를 사용합니다.
-- 설정: `nginx/nginx.edge.conf` 의 `http {}` 블록에 WAF 활성화
-  - `modsecurity on;`
-  - `modsecurity_rules_file /etc/nginx/modsecurity.d/modsecurity.conf;`
+- 설정: `nginx/nginx.edge.conf` 의 `http {}` 블록에 이미지 제공 설정 포함
+  - `include /etc/nginx/conf.d/modsecurity.conf;`
 - 규칙 오버라이드: `nginx/waf/modsecurity-override.conf` (탐지 모드/커스텀 룰 최소화)
   - compose에서 템플릿 경로로 마운트되어 컨테이너 내 `/etc/nginx/modsecurity.d/modsecurity-override.conf` 로 렌더링됩니다.
 - 템플릿 마운트: 이미지의 엔트리포인트가 템플릿을 `/etc/nginx/*`에 렌더링하므로 최종 경로를 직접 마운트하지 않습니다.
@@ -42,3 +41,10 @@ WAF (ModSecurity + OWASP CRS) 적용 가이드
 로컬/개발 환경 적용(선택)
 - 기본 로컬용 nginx는 ModSecurity 모듈이 없는 `nginx:latest` 를 사용합니다.
 - 개발/테스트에서 WAF를 확인하려면 별도 compose 오버라이드로 엣지와 동일 이미지를 사용하고, `nginx.local.conf` 에 `modsecurity` 지시어를 추가하십시오.
+
+권한(퍼미션) 체크
+- 컨테이너가 `/var/log/nginx/error.log` 권한 오류로 기동 실패 시, 호스트 로그 디렉터리 권한을 조정하세요.
+  - 생성: `sudo mkdir -p /home/greatjlim/projects/logs/nginx /home/greatjlim/projects/logs/modsecurity`
+  - 임시(빠른 확인): `sudo chmod -R 777 /home/greatjlim/projects/logs/nginx /home/greatjlim/projects/logs/modsecurity`
+  - 권장(보안 고려): 컨테이너 내 Nginx UID/GID에 맞춰 chown (일반적으로 101:101)
+    - `sudo chown -R 101:101 /home/greatjlim/projects/logs/nginx /home/greatjlim/projects/logs/modsecurity`
