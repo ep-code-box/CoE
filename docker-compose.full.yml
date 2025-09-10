@@ -17,6 +17,8 @@ services:
   nginx-edge:
     image: owasp/modsecurity-crs:nginx
     profiles: [edge]
+    environment:
+      - MODSECURITY_DETECTION_ONLY=off
     ports:
       - "80:80"
       - "8080:8080"
@@ -26,9 +28,21 @@ services:
       - ./nginx/waf/modsecurity-override.conf:/etc/nginx/templates/modsecurity.d/modsecurity-override.conf.template:ro
       - /home/greatjlim/projects/logs/nginx:/var/log/nginx
       - /home/greatjlim/projects/logs/modsecurity:/var/log/modsecurity
+      - ./nginx/ip-allowlist.conf:/etc/nginx/conf.d/ip-allowlist.conf:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command: ["nginx","-g","daemon off;"]
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
     networks: [coe-edge-net]
 
   # Removed certbot/ssl-dummy for HTTP-only setup
