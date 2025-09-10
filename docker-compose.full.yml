@@ -38,7 +38,6 @@ services:
       - ALL
     cap_add:
       - NET_BIND_SERVICE
-    read_only: true
     tmpfs:
       - /tmp
       - /var/cache/nginx
