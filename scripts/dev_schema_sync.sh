@@ -9,6 +9,8 @@ set -euo pipefail
 SCHEMA_FILE="${1:-schema.sql}"
 PROFILE="dev"
 COMPOSE_FILE="docker-compose.full.yml"
+# Use a fixed project name for dev to keep container names stable
+PROJECT_NAME="coe-dev"
 DB_SERVICE="mariadb-dev"
 BACKEND_SERVICE="coe-backend-dev"
 RAG_SERVICE="coe-ragpipeline-dev"
@@ -19,7 +21,7 @@ if [[ "${USE_SUDO:-0}" == "1" ]]; then
   SUDO_PREFIX="sudo"
 fi
 
-DC=( ${SUDO_PREFIX} docker compose -f "${COMPOSE_FILE}" --profile "${PROFILE}" )
+DC=( ${SUDO_PREFIX} docker compose -p "${PROJECT_NAME}" -f "${COMPOSE_FILE}" --profile "${PROFILE}" )
 
 echo "[dev-schema-sync] Using schema file: ${SCHEMA_FILE}"
 if [[ ! -f "${SCHEMA_FILE}" ]]; then
