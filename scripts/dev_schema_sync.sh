@@ -68,16 +68,17 @@ SQL
 '
 # 2) Add unique index on flow_id only if missing (avoid duplicate key error)
 "${DC[@]}" exec -T "${DB_SERVICE}" sh -lc '
-  mariadb -h127.0.0.1 -u"$MARIADB_USER" -p"$MARIADB_PASSWORD" "$MARIADB_DATABASE" -e "
-  SET @exists := (
-    SELECT COUNT(1)
-    FROM information_schema.statistics
-    WHERE table_schema = DATABASE()
-      AND table_name = 'langflows'
-      AND index_name = 'ix_langflows_flow_id'
-  );
-  SET @sql := IF(@exists = 0, 'ALTER TABLE `langflows` ADD UNIQUE KEY `ix_langflows_flow_id` (`flow_id`);', 'SELECT 1;');
-  PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;"
+  mariadb -h127.0.0.1 -u"$MARIADB_USER" -p"$MARIADB_PASSWORD" "$MARIADB_DATABASE" <<"SQL"
+SET @exists := (
+  SELECT COUNT(1)
+  FROM information_schema.statistics
+  WHERE table_schema = DATABASE()
+    AND table_name = 'langflows'
+    AND index_name = 'ix_langflows_flow_id'
+);
+SET @sql := IF(@exists = 0, 'ALTER TABLE langflows ADD UNIQUE KEY ix_langflows_flow_id (flow_id);', 'SELECT 1;');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SQL
 '
 
 echo "[dev-schema-sync] Importing schema (FK off, collation normalize -> utf8mb4_unicode_ci)..."
