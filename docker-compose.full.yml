@@ -43,6 +43,10 @@ services:
     cap_add:
       - NET_BIND_SERVICE
     read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
     networks: [coe-edge-net]
 
   # Removed certbot/ssl-dummy for HTTP-only setup

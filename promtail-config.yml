@@ -42,7 +42,13 @@ scrape_configs:
       - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
         target_label: service
 
-      # derive env from project suffix: coe-(dev|prod|edge)
+      # derive env from compose service suffix if present: *-(dev|prod|edge)
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: env
+        regex: '.*-(dev|prod|edge)'
+        replacement: '$1'
+
+      # derive env from project suffix as fallback: coe-(dev|prod|edge)
       - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
         target_label: env
         regex: '.*-(dev)'
@@ -54,6 +60,12 @@ scrape_configs:
       - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
         target_label: env
         regex: '.*-(edge)'
+        replacement: '$1'
+
+      # app: base service name without env suffix (e.g., coe-backend[-dev] -> coe-backend)
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: app
+        regex: '^(.*?)(?:-(dev|prod|edge))?$'
         replacement: '$1'
 
       # Optional custom labels if present on services
@@ -82,12 +94,14 @@ scrape_configs:
           job: app_files
           env: prod
           service: coe-backend
+          app: coe-backend
           __path__: /host-logs/coe-backend/prod/**/*.log
       - targets: [localhost]
         labels:
           job: app_files
           env: prod
           service: coe-ragpipeline
+          app: coe-ragpipeline
           __path__: /host-logs/coe-ragpipeline/prod/**/*.log
 
   - job_name: app_files_dev
@@ -97,12 +111,14 @@ scrape_configs:
           job: app_files
           env: dev
           service: coe-backend
+          app: coe-backend
           __path__: /host-logs/coe-backend/dev/**/*.log
       - targets: [localhost]
         labels:
           job: app_files
           env: dev
           service: coe-ragpipeline
+          app: coe-ragpipeline
           __path__: /host-logs/coe-ragpipeline/dev/**/*.log
 
   # File-based logs from local compose (repo) directories
@@ -113,10 +129,12 @@ scrape_configs:
           job: app_files
           env: local
           service: coe-backend
+          app: coe-backend
           __path__: /local-logs/coe-backend/**/*.log
       - targets: [localhost]
         labels:
           job: app_files
           env: local
           service: coe-ragpipeline
+          app: coe-ragpipeline
           __path__: /local-logs/coe-ragpipeline/**/*.log
