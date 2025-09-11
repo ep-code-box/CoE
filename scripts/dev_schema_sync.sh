@@ -30,9 +30,22 @@ fi
 echo "[dev-schema-sync] Ensuring dev DB is up (${DB_SERVICE})..."
 "${DC[@]}" up -d "${DB_SERVICE}"
 
+echo "[dev-schema-sync] Waiting for MariaDB to become healthy..."
+for i in $(seq 1 90); do
+  if "${DC[@]}" exec -T "${DB_SERVICE}" sh -lc 'mariadb-admin -h127.0.0.1 -u"$MARIADB_USER" -p"$MARIADB_PASSWORD" --silent ping' >/dev/null 2>&1; then
+    echo "[dev-schema-sync] MariaDB is ready."
+    break
+  fi;
+  sleep 1;
+  if [[ $i -eq 90 ]]; then
+    echo "[dev-schema-sync] ERROR: MariaDB did not become ready in time" >&2
+    exit 1
+  fi
+done
+
 echo "[dev-schema-sync] Pre-conditioning parent table (langflows) for FK integrity..."
 "${DC[@]}" exec -T "${DB_SERVICE}" sh -lc '
-  mariadb -u"$MARIADB_USER" -p"$MARIADB_PASSWORD" "$MARIADB_DATABASE" <<"SQL"
+  mariadb -h127.0.0.1 -u"$MARIADB_USER" -p"$MARIADB_PASSWORD" "$MARIADB_DATABASE" <<"SQL"
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS=0;
 CREATE TABLE IF NOT EXISTS `langflows` (
@@ -59,7 +72,7 @@ echo "[dev-schema-sync] Importing schema (FK off, collation normalize -> utf8mb4
   echo 'SET FOREIGN_KEY_CHECKS=0;';
   sed 's/utf8mb4_uca1400_ai_ci/utf8mb4_unicode_ci/g' "${SCHEMA_FILE}"
 ) | "${DC[@]}" exec -T "${DB_SERVICE}" sh -lc '
-  mariadb -u"$MARIADB_USER" -p"$MARIADB_PASSWORD" "$MARIADB_DATABASE" --force'
+  mariadb -h127.0.0.1 -u"$MARIADB_USER" -p"$MARIADB_PASSWORD" "$MARIADB_DATABASE" --force'
 
 echo "[dev-schema-sync] Alembic stamp HEAD (backend)..."
 "${DC[@]}" exec -T "${BACKEND_SERVICE}" alembic stamp head || {
@@ -79,4 +92,3 @@ echo "[dev-schema-sync] Verify alembic versions..."
   "SELECT * FROM alembic_version_backend; SELECT * FROM alembic_version_rag;" "$MARIADB_DATABASE" || true'
 
 echo "[dev-schema-sync] Done."
-
