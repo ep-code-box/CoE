@@ -47,8 +47,7 @@ done
 
 echo "[dev-schema-sync] Pre-conditioning parent table (langflows) for FK integrity..."
 # 1) Ensure table and column are present/normalized (idempotent)
-"${DC[@]}" exec -T "${DB_SERVICE}" sh -lc '
-  mariadb -h127.0.0.1 -u"$MARIADB_USER" -p"$MARIADB_PASSWORD" "$MARIADB_DATABASE" <<"SQL"
+"${DC[@]}" exec -T "${DB_SERVICE}" sh -lc 'mariadb -h127.0.0.1 -u"$MARIADB_USER" -p"$MARIADB_PASSWORD" "$MARIADB_DATABASE"' <<'SQL'
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS=0;
 CREATE TABLE IF NOT EXISTS `langflows` (
@@ -65,10 +64,9 @@ CREATE TABLE IF NOT EXISTS `langflows` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ALTER TABLE `langflows` MODIFY `flow_id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL;
 SQL
-'
+
 # 2) Add unique index on flow_id only if missing (avoid duplicate key error)
-"${DC[@]}" exec -T "${DB_SERVICE}" sh -lc '
-  mariadb -h127.0.0.1 -u"$MARIADB_USER" -p"$MARIADB_PASSWORD" "$MARIADB_DATABASE" <<"SQL"
+"${DC[@]}" exec -T "${DB_SERVICE}" sh -lc 'mariadb -h127.0.0.1 -u"$MARIADB_USER" -p"$MARIADB_PASSWORD" "$MARIADB_DATABASE"' <<'SQL'
 SET @exists := (
   SELECT COUNT(1)
   FROM information_schema.statistics
@@ -79,7 +77,6 @@ SET @exists := (
 SET @sql := IF(@exists = 0, 'ALTER TABLE langflows ADD UNIQUE KEY ix_langflows_flow_id (flow_id);', 'SELECT 1;');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SQL
-'
 
 echo "[dev-schema-sync] Importing schema (FK off, collation normalize -> utf8mb4_unicode_ci)..."
 (
