@@ -22,6 +22,18 @@ CoE 프로젝트의 두 서비스 모두 **Swagger UI**를 통해 API를 쉽게 
 - **ReDoc (Nginx 경유)**: http://localhost/rag/redoc
 - **OpenAPI JSON (Nginx 경유)**: http://localhost/rag/openapi.json
 
+> Edge(dev) 프록시(8080) 사용 시: http://localhost:8080/rag/docs
+
+문자가 깨지거나 리소스가 로드되지 않으면, RAG 서비스에 루트 경로를 지정하세요.
+
+- 옵션 A: FastAPI 루트 경로 설정 (권장)
+  - `CoE-RagPipeline/.env`에 `ROOT_PATH=/rag` 추가 (Edge/dev에서만)
+  - 또는 컨테이너 환경변수로 `ROOT_PATH=/rag` 지정
+- 옵션 B: Nginx에서 프리픽스 헤더 전달
+  - `location /rag/ { ... proxy_set_header X-Forwarded-Prefix /rag; }`
+
+이렇게 하면 Swagger UI가 `/rag/openapi.json`, `/rag/docs/*` 정적 리소스를 올바르게 참조합니다.
+
 ## 🚀 주요 기능
 
 ### 🤖 CoE-Backend API 기능
