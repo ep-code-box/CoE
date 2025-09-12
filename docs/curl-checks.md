@@ -70,6 +70,19 @@ curl -sS -X POST http://localhost/v1/chat/completions \
   }' | jq .
 ```
 
+- Chat completion with group filter (optional)
+
+```
+curl -sS -X POST http://localhost/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "ax4",
+    "messages": [ {"role": "user", "content": "만나이 계산 19850421"} ],
+    "context": "aider",
+    "group_name": "dev-team"
+  }' | jq .
+```
+
 ## RAG Pipeline
 
 - Health (GET)
