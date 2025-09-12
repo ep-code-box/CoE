@@ -50,6 +50,7 @@ services:
       - LOG_LEVEL=DEBUG
       - RELOAD=true
       - RUN_MIGRATIONS=false
+      - ROOT_PATH=/rag
     volumes:
       - ./CoE-RagPipeline:/app
     command: >-

@@ -82,6 +82,7 @@ services:
       - ./CoE-RagPipeline/.env.prod
     environment:
       - TZ=Asia/Seoul
+      - ROOT_PATH=/rag
       - RUN_MIGRATIONS=true
       - DB_HOST=mariadb
       - DB_PORT=3306
@@ -104,4 +105,3 @@ services:
     volumes:
       - /home/greatjlim/projects/logs/coe-ragpipeline/prod:/app/logs
     networks: [coe-prod-net]
-
