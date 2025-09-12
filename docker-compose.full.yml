@@ -32,7 +32,7 @@ services:
       - ./nginx/waf/modsecurity-override.conf:/etc/nginx/templates/modsecurity.d/modsecurity-override.conf.template:ro
       - /home/greatjlim/projects/logs/nginx:/var/log/nginx
       - /home/greatjlim/projects/logs/modsecurity:/var/log/modsecurity
-      - ./nginx/ip-allowlist.conf:/etc/nginx/templates/ip-allowlist.conf.template:ro
+      - ./nginx/ip-allowlist.conf:/etc/nginx/templates/conf.d/ip-allowlist.conf.template:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command: ["nginx","-g","daemon off;"]
