@@ -1,0 +1,105 @@
+name: coe-dev
+
+networks:
+  coe-dev-net:
+    name: coe-dev-net
+    driver: bridge
+
+services:
+  chroma:
+    image: chromadb/chroma:latest
+    volumes:
+      - /home/greatjlim/projects/db/dev/chroma:/data
+    networks: [coe-dev-net]
+
+  mariadb:
+    image: mariadb:latest
+    environment:
+      - MARIADB_ROOT_PASSWORD=acce
+      - MARIADB_DATABASE=coe_db
+      - MARIADB_USER=coe_user
+      - MARIADB_PASSWORD=coe_password
+    volumes:
+      - /home/greatjlim/projects/db/dev/mariadb:/var/lib/mysql
+    networks: [coe-dev-net]
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -uroot -pacce --silent || exit 1"]
+      interval: 2s
+      timeout: 5s
+      retries: 120
+      start_period: 15s
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass coe_redis_password
+    volumes:
+      - /home/greatjlim/projects/db/dev/redis:/data
+    networks: [coe-dev-net]
+
+  backend:
+    build:
+      context: ./CoE-Backend
+    env_file:
+      - ./CoE-Backend/.env.dev
+    environment:
+      - TZ=Asia/Seoul
+      - RUN_MIGRATIONS=true
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - CHROMA_HOST=chroma
+      - CHROMA_PORT=8000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - APP_ENV=development
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - RELOAD=false
+      - PYTHONUNBUFFERED=1
+      - LOG_TO_FILE=true
+      - LOG_DIR=/app/logs
+      - RAG_PIPELINE_URL=http://ragpipeline:8001
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      chroma:
+        condition: service_started
+      redis:
+        condition: service_started
+      ragpipeline:
+        condition: service_started
+    ports:
+      - "18002:8000"
+    volumes:
+      - /home/greatjlim/projects/logs/coe-backend/dev:/app/logs
+    networks: [coe-dev-net]
+
+  ragpipeline:
+    build:
+      context: ./CoE-RagPipeline
+    env_file:
+      - ./CoE-RagPipeline/.env.dev
+    environment:
+      - TZ=Asia/Seoul
+      - RUN_MIGRATIONS=true
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - CHROMA_HOST=chroma
+      - CHROMA_PORT=8000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - APP_ENV=development
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - RELOAD=false
+      - LOG_TO_FILE=true
+      - LOG_DIR=/app/logs
+    depends_on:
+      - chroma
+      - mariadb
+      - redis
+    ports:
+      - "18003:8001"
+    volumes:
+      - /home/greatjlim/projects/logs/coe-ragpipeline/dev:/app/logs
+    networks: [coe-dev-net]
+
