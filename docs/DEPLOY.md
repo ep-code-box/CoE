@@ -14,8 +14,13 @@
 
 one shot.
 
-sudo docker compose -p coe-dev -f docker-compose.full.yml --profile dev build coe-backend-dev && sudo docker compose -p coe-dev -f docker-compose.full.yml --profile dev run --rm coe-backend-dev alembic upgrade head && sudo docker compose -p coe-dev -f docker-compose.full.yml --profile dev up -d coe-backend-dev
-sudo docker compose -p coe-prod -f docker-compose.full.yml --profile prod build coe-backend-prod && sudo docker compose -p coe-prod -f docker-compose.full.yml --profile prod run --rm coe-backend-prod alembic upgrade head && sudo docker compose -p coe-prod -f docker-compose.full.yml --profile prod up -d coe-backend-prod
+sudo docker compose -p coe-dev -f docker-compose.dev.yml build backend ragpipeline && \
+sudo docker compose -p coe-dev -f docker-compose.dev.yml run --rm backend alembic upgrade head && \
+sudo docker compose -p coe-dev -f docker-compose.dev.yml up -d backend ragpipeline
+
+sudo docker compose -p coe-prod -f docker-compose.prod.yml build backend ragpipeline && \
+sudo docker compose -p coe-prod -f docker-compose.prod.yml run --rm backend alembic upgrade head && \
+sudo docker compose -p coe-prod -f docker-compose.prod.yml up -d backend ragpipeline
 
 복사 기반 분리 배포(권장)
 1) 디렉토리 준비(한 번)
@@ -41,16 +46,16 @@ cp CoE-RagPipeline/.env.example CoE-RagPipeline/.env.dev
 # Prod
 cd /home/greatjlim/projects/CoE-prod
 git fetch && git checkout main && git pull --ff-only
-sudo docker compose -p coe-prod -f docker-compose.full.yml --profile prod up -d --build 
+sudo docker compose -p coe-prod -f docker-compose.prod.yml up -d --build 
 
 # Dev
 cd /home/greatjlim/projects/CoE-dev
 git fetch && git checkout develop && git pull --ff-only
-sudo docker compose -p coe-dev -f docker-compose.full.yml --profile dev up -d --build 
+sudo docker compose -p coe-dev -f docker-compose.dev.yml up -d --build 
 
-# Edge (HTTP 프록시, 1회 실행)
+# Edge (HTTP 프록시)
 cd /home/greatjlim/projects/CoE-prod
-sudo docker compose -p edge -f docker-compose.full.yml --profile edge up -d 
+sudo docker compose -p coe -f docker-compose.edge.yml up -d 
 ```
 4) 헬스 체크
 ```
@@ -62,17 +67,17 @@ curl -I http://greatcoe.cafe24.com:8080/rag/health
 ```
 # Prod
 cd /home/greatjlim/projects/CoE-prod && git pull --ff-only
-sudo docker compose -p coe-prod -f docker-compose.full.yml --profile prod up -d --build
+sudo docker compose -p coe-prod -f docker-compose.prod.yml up -d --build
 
 # Dev
 cd /home/greatjlim/projects/CoE-dev && git pull --ff-only
-sudo docker compose -p coe-dev -f docker-compose.full.yml --profile dev up -d --build
+sudo docker compose -p coe-dev -f docker-compose.dev.yml up -d --build
 ```
 6) 중지/정리
 ```
-sudo docker compose -p coe-prod -f docker-compose.full.yml --profile prod down
-sudo docker compose -p coe-dev  -f docker-compose.full.yml --profile dev  down 
-sudo docker compose -p edge     -f docker-compose.full.yml --profile edge down
+sudo docker compose -p coe-prod -f docker-compose.prod.yml down
+sudo docker compose -p coe-dev  -f docker-compose.dev.yml  down 
+sudo docker compose -p edge     -f docker-compose.edge.yml down
 ```
 
 참고 문서
@@ -99,11 +104,11 @@ docker compose -f docker-compose.local.yml restart nginx
 docker compose -f docker-compose.local.yml exec nginx nginx -s reload
 ```
 
-엣지 프록시(Full + profiles: edge)
+엣지 프록시(edge 전용 compose)
 ```
-docker compose -f docker-compose.full.yml --profile edge restart nginx-edge
+docker compose -f docker-compose.edge.yml restart nginx-edge
 # 또는
-docker compose -f docker-compose.full.yml --profile edge exec nginx-edge nginx -s reload
+docker compose -f docker-compose.edge.yml exec nginx-edge nginx -s reload
 ```
 
 ## 모니터링 스택(Loki/Promtail/Grafana)

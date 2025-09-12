@@ -15,16 +15,25 @@ if [[ "${1:-}" == "--dev-only" ]]; then
 fi
 
 if [[ ${DEV_ONLY} -eq 0 ]]; then
+  echo "[run_edge] Pre-clean old edge containers and networks (if any)"
+  # Old container name from previous full-profile project
+  docker rm -f coe-nginx-edge-1 >/dev/null 2>&1 || true
+  # Current container name from edge-only compose
+  docker rm -f coe-edge-nginx-edge-1 >/dev/null 2>&1 || true
+  # Old/new networks (ignore errors if in use or missing)
+  docker network rm coe_coe-edge-net >/dev/null 2>&1 || true
+  docker network rm coe-edge_coe-edge-net >/dev/null 2>&1 || true
+
   # Compose-based edge (separate file)
   COMPOSE_FILE="${ROOT_DIR}/docker-compose.edge.yml"
-  echo "[run_edge] Bringing up edge via compose: ${COMPOSE_FILE}"
-  docker compose -f "${COMPOSE_FILE}" up -d nginx-edge
+  echo "[run_edge] Bringing up edge via compose: ${COMPOSE_FILE} (project: coe)"
+  docker compose -p coe -f "${COMPOSE_FILE}" up -d nginx-edge
   echo "[run_edge] Edge running (ports: 80 prod, 8080 dev). Quick checks:"
   echo "  - Prod Backend:   curl -I http://localhost/health"
   echo "  - Prod RAG:       curl -I http://localhost/rag/health"
   echo "  - Dev Backend:    curl -I http://localhost:8080/health"
   echo "  - Dev RAG:        curl -I http://localhost:8080/rag/health"
-  echo "  - Edge logs:      docker compose -f ${COMPOSE_FILE} logs -f nginx-edge"
+  echo "  - Edge logs:      docker compose -p coe -f ${COMPOSE_FILE} logs -f nginx-edge"
   exit 0
 fi
 

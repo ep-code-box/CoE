@@ -19,21 +19,21 @@ git fetch && git checkout main && git pull --ff-only
 ```
 또는 수동으로:
 ```
-docker compose -f docker-compose.full.yml -p coe-prod --profile prod build coe-backend-prod coe-ragpipeline-prod
-docker compose -f docker-compose.full.yml -p coe-prod --profile prod up -d coe-backend-prod coe-ragpipeline-prod
+docker compose -f docker-compose.prod.yml -p coe-prod build backend ragpipeline
+docker compose -f docker-compose.prod.yml -p coe-prod up -d backend ragpipeline
 ```
 
 3) 마이그레이션 적용
 - 기본: prod 프로파일은 `RUN_MIGRATIONS=true`로 자동 적용.
 - 필요 시 수동 재적용:
 ```
-docker compose -f docker-compose.full.yml -p coe-prod --profile prod exec coe-backend-prod alembic upgrade head
-docker compose -f docker-compose.full.yml -p coe-prod --profile prod exec coe-ragpipeline-prod alembic upgrade head
+docker compose -f docker-compose.prod.yml -p coe-prod exec backend alembic upgrade head
+docker compose -f docker-compose.prod.yml -p coe-prod exec ragpipeline alembic upgrade head
 ```
 
 4) 엣지(Nginx) 반영 (엣지 설정 변경 시에만)
 ```
-docker compose -f docker-compose.full.yml --profile edge -p edge exec nginx-edge nginx -s reload
+docker compose -f docker-compose.edge.yml -p coe exec nginx-edge nginx -s reload
 ```
 
 ## 헬스 체크 / 스모크 테스트
@@ -44,7 +44,7 @@ docker compose -f docker-compose.full.yml --profile edge -p edge exec nginx-edge
 ## 모니터링/로그
 - 컨테이너 로그(실시간):
 ```
-docker compose -f docker-compose.full.yml -p coe-prod --profile prod logs -f coe-backend-prod coe-ragpipeline-prod
+docker compose -f docker-compose.prod.yml -p coe-prod logs -f backend ragpipeline
 ```
 - 엣지 접근/에러 로그: `/home/greatjlim/projects/logs/nginx/`
 - 서비스 로그: 
@@ -58,7 +58,7 @@ cd /home/greatjlim/projects/CoE-prod
 git checkout <직전_안정_커밋>
 ./scripts/run_prd.sh
 ```
-- 긴급 서비스 재시작: `docker compose -f docker-compose.full.yml -p coe-prod --profile prod restart coe-backend-prod coe-ragpipeline-prod`
+- 긴급 서비스 재시작: `docker compose -f docker-compose.prod.yml -p coe-prod restart backend ragpipeline`
 - 마이그레이션 영향 최소화: 롤백 중에는 일시적으로 `RUN_MIGRATIONS=false`로 기동 고려.
 - DB 롤백이 필요한 경우 사전 백업/스냅샷 활용(운영 표준 절차에 따름).
 

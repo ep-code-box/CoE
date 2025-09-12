@@ -14,13 +14,13 @@ WAF (ModSecurity + OWASP CRS) 적용 가이드
 - 로그: 컨테이너 `/var/log/modsecurity` 가 호스트 `/home/greatjlim/projects/logs/modsecurity` 로 마운트됩니다.
 
 실행/반영
-- edge 프로파일 실행 또는 재생성:
-  - `docker compose -f docker-compose.full.yml --profile edge up -d --force-recreate nginx-edge`
+- edge 전용 compose 파일로 실행 또는 재생성:
+  - `docker compose -f docker-compose.edge.yml up -d --force-recreate nginx-edge`
   - 이미지/템플릿 변경 반영에 안전합니다.
 
 운영 권장 플로우
 1) 모니터링(탐지만): 기본 `DetectionOnly` 로 운영하며 `audit.log` 를 관찰합니다.
-   - `docker compose -f docker-compose.full.yml --profile edge logs -f nginx-edge`
+   - `docker compose -f docker-compose.edge.yml logs -f nginx-edge`
    - 호스트 로그: `/home/greatjlim/projects/logs/modsecurity/audit.log`
 2) 튜닝: 정상 트래픽에서 반복적으로 탐지되는 룰을 화이트리스트하거나 스코프를 조정합니다.
    - 개별 위치/경로에서만 완화하려면 Nginx `location` 별로 ModSecurity `ctl`/`SecRuleRemoveById` 적용을 고려합니다.
