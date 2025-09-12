@@ -256,6 +256,8 @@ services:
       - RELOAD=false
       - LOG_TO_FILE=true
       - LOG_DIR=/app/logs
+      # Serve under /rag when behind edge/dev proxy
+      - ROOT_PATH=/rag
     depends_on:
       - chroma-dev
       - mariadb-dev
