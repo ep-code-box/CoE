@@ -1,0 +1,19 @@
+name: coe-edge-nosec
+
+networks:
+  coe-edge-nosec-net:
+    driver: bridge
+
+services:
+  nginx-edge-nosec:
+    image: nginx:1.28-alpine
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - ./nginx/nginx.edge.nosec.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ip-allowlist.conf:/etc/nginx/conf.d/ip-allowlist.conf:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: ["nginx","-g","daemon off;"]
+    networks: [coe-edge-nosec-net]
