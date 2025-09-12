@@ -1,0 +1,45 @@
+name: coe-edge
+
+networks:
+  coe-edge-net:
+    driver: bridge
+
+volumes:
+  nginx-conf-edge:
+  modsec-conf-edge:
+
+services:
+  nginx-edge:
+    image: owasp/modsecurity-crs:nginx
+    environment:
+      - MODSECURITY_DETECTION_ONLY=off
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - nginx-conf-edge:/etc/nginx
+      - modsec-conf-edge:/etc/modsecurity.d
+      # Provide our config as templates the image will render into /etc/nginx/*
+      - ./nginx/nginx.edge.conf:/etc/nginx/templates/nginx.conf.template:ro
+      - ./nginx/waf/modsecurity-override.conf:/etc/nginx/templates/modsecurity.d/modsecurity-override.conf.template:ro
+      - ./nginx/ip-allowlist.conf:/etc/nginx/templates/conf.d/ip-allowlist.conf.template:ro
+      # Logs
+      - /home/greatjlim/projects/logs/nginx:/var/log/nginx
+      - /home/greatjlim/projects/logs/modsecurity:/var/log/modsecurity
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: ["nginx","-g","daemon off;"]
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    # read_only 루트FS는 OWASP CRS가 설정 파일을 렌더링/갱신할 때 문제를 유발할 수 있음
+    # 필요 시 다시 켤 수 있으나, 기본은 쓰기 가능하도록 둡니다.
+    tmpfs:
+      - /var/cache/nginx:rw,mode=1777
+      - /var/run:rw,mode=755
+      - /tmp:rw,mode=1777
+    networks: [coe-edge-net]
+

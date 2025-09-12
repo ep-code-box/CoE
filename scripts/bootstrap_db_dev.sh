@@ -4,8 +4,8 @@ set -euo pipefail
 # Bootstrap core DB tables for dev profile (coe-dev)
 # Creates analysis_requests and repository_analyses if missing.
 
-COMPOSE="docker compose -f docker-compose.full.yml -p coe-dev"
-DB_SVC="mariadb-dev"
+COMPOSE="docker compose -f docker-compose.dev.yml -p coe-dev"
+DB_SVC="mariadb"
 DB="coe_db"
 ROOT_USER="root"
 ROOT_PW="acce"
@@ -62,4 +62,3 @@ SQL"
 
 echo "[db-bootstrap] Done. Showing tables:"
 $COMPOSE exec -T "$DB_SVC" mariadb -u${ROOT_USER} -p${ROOT_PW} -D ${DB} -e "SHOW TABLES LIKE 'analysis_requests'; SHOW TABLES LIKE 'repository_analyses';"
-

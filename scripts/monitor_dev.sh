@@ -6,7 +6,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")"/.. && pwd)"
 cd "$ROOT_DIR"
 
-COMPOSE=(docker compose -p coe-dev -f docker-compose.full.yml --profile dev)
+COMPOSE=(docker compose -p coe-dev -f docker-compose.dev.yml)
 
 BACKEND_HEALTH="http://localhost:18002/health"
 RAG_HEALTH="http://localhost:18003/health"
@@ -26,12 +26,11 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-echo "== DEV monitor: coe-backend-dev, coe-ragpipeline-dev, mariadb-dev, redis-dev, chroma-dev =="
+echo "== DEV monitor: backend, ragpipeline, mariadb, redis, chroma =="
 "${COMPOSE[@]}" ps
 
 health_loop & HL_PID=$!
 
 # Combined logs with service prefixes
 "${COMPOSE[@]}" logs -f --tail=200 \
-  coe-backend-dev coe-ragpipeline-dev mariadb-dev redis-dev chroma-dev
-
+  backend ragpipeline mariadb redis chroma

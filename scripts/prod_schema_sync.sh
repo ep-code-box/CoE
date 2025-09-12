@@ -7,13 +7,12 @@ set -euo pipefail
 # - Stamps Alembic heads for Backend and RAG prod services
 
 SCHEMA_FILE="${1:-schema.sql}"
-PROFILE="prod"
-COMPOSE_FILE="docker-compose.full.yml"
+COMPOSE_FILE="docker-compose.prod.yml"
 # Fixed project name for stable container names
 PROJECT_NAME="coe-prod"
-DB_SERVICE="mariadb-prod"
-BACKEND_SERVICE="coe-backend-prod"
-RAG_SERVICE="coe-ragpipeline-prod"
+DB_SERVICE="mariadb"
+BACKEND_SERVICE="backend"
+RAG_SERVICE="ragpipeline"
 
 # Set USE_SUDO=1 to prefix docker commands with sudo
 SUDO_PREFIX=""
@@ -21,7 +20,7 @@ if [[ "${USE_SUDO:-0}" == "1" ]]; then
   SUDO_PREFIX="sudo"
 fi
 
-DC=( ${SUDO_PREFIX} docker compose -p "${PROJECT_NAME}" -f "${COMPOSE_FILE}" --profile "${PROFILE}" )
+DC=( ${SUDO_PREFIX} docker compose -p "${PROJECT_NAME}" -f "${COMPOSE_FILE}" )
 
 echo "[prod-schema-sync] Using schema file: ${SCHEMA_FILE}"
 if [[ ! -f "${SCHEMA_FILE}" ]]; then
@@ -104,4 +103,3 @@ echo "[prod-schema-sync] Verify alembic versions..."
   "SELECT * FROM alembic_version_backend; SELECT * FROM alembic_version_rag;" "$MARIADB_DATABASE" || true'
 
 echo "[prod-schema-sync] Done."
-

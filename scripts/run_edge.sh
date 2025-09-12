@@ -15,16 +15,16 @@ if [[ "${1:-}" == "--dev-only" ]]; then
 fi
 
 if [[ ${DEV_ONLY} -eq 0 ]]; then
-  # Compose-based edge (recommended, matches docker-compose.full.yml)
-  COMPOSE_FILE="${ROOT_DIR}/docker-compose.full.yml"
-  echo "[run_edge] Bringing up edge via compose: ${COMPOSE_FILE} --profile edge"
-  docker compose -f "${COMPOSE_FILE}" --profile edge up -d nginx-edge
+  # Compose-based edge (separate file)
+  COMPOSE_FILE="${ROOT_DIR}/docker-compose.edge.yml"
+  echo "[run_edge] Bringing up edge via compose: ${COMPOSE_FILE}"
+  docker compose -f "${COMPOSE_FILE}" up -d nginx-edge
   echo "[run_edge] Edge running (ports: 80 prod, 8080 dev). Quick checks:"
   echo "  - Prod Backend:   curl -I http://localhost/health"
   echo "  - Prod RAG:       curl -I http://localhost/rag/health"
   echo "  - Dev Backend:    curl -I http://localhost:8080/health"
   echo "  - Dev RAG:        curl -I http://localhost:8080/rag/health"
-  echo "  - Edge logs:      docker compose -f ${COMPOSE_FILE} --profile edge logs -f nginx-edge"
+  echo "  - Edge logs:      docker compose -f ${COMPOSE_FILE} logs -f nginx-edge"
   exit 0
 fi
 
