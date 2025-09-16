@@ -130,3 +130,16 @@ graph TD
 
 - 기본적으로 DB 마이그레이션은 스킵됩니다. 운영 배포 시에만 활성화하여 적용하세요.
 - 자세한 운영 절차와 옵션은 `docs/OPERATIONS.md`를 참고하세요.
+
+## 7. ITSD 담당자 추천 에이전트 통합
+
+- RAG 파이프라인:
+  - `POST /api/v1/itsd/embed-requests` — ITSD Excel(.xlsx) 임베딩
+  - `POST /api/v1/itsd/recommend-assignee` — 제목/내용 기반 담당자 추천 (Markdown 반환)
+- 백엔드(프록시):
+  - `POST /itsd/embed-requests` — RAG 프록시 업로드
+  - `POST /itsd/recommend-assignee` — RAG 프록시 추천
+- 백엔드 에이전트 도구:
+  - 도구명: `itsd_recommend_assignee`
+  - 컨텍스트: `openWebUi`
+  - 설명: 제목/내용을 입력받아 추천 결과(Markdown)를 생성
