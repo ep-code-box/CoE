@@ -1,8 +1,12 @@
 # Quick Curl Checks
 
+IMPORTANT: RAG Pipeline는 향후 Backend를 통해서만 호출하도록 전환될 예정입니다.
+직접 접근(예: localhost:8001, /rag/*) 예시는 점진적으로 제거됩니다. 새로운 스크립트/클라이언트는
+반드시 Backend 엔드포인트를 사용하세요. (적용은 유예 기간 후 순차적 진행)
+
 > 참고: docker-compose.local.yml 또는 dev.yml로 올렸다면
 > - Backend: `http://localhost` (nginx 프록시)
-> - RAG Pipeline: `http://localhost:8001`
+> - RAG Pipeline: `http://localhost:8001` (직접 호출은 곧 중단 예정, Backend 경유 권장)
 > - 로컬 self-signed HTTPS를 쓰면 `-k` 옵션을 추가하세요.
 
 ## Backend
@@ -56,6 +60,59 @@ curl -sS -X POST http://localhost/v1/embeddings \
     "model": "text-embedding-3-large",
     "input": ["hello world"]
   }' | jq .
+```
+
+## RAG (직접 호출 예시 — 점진적 중단 예정)
+
+- Start analysis with enhanced flags (POST)
+```
+curl -sS -X POST http://localhost:8001/api/v1/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "repositories": [{"url": "https://github.com/octocat/Hello-World.git", "branch": "main"}],
+    "include_ast": true,
+    "include_tech_spec": true,
+    "include_correlation": true,
+    "include_tree_sitter": true,
+    "include_static_analysis": true,
+    "include_dependency_analysis": true,
+    "generate_report": true,
+    "group_name": "MyTeamA"
+  }' | jq .
+```
+
+- Get analysis result (GET)
+```
+curl -sS http://localhost:8001/api/v1/results/<analysis_id> | jq .
+```
+
+- Vector search with group filter (POST)
+```
+curl -sS -X POST http://localhost:8001/api/v1/search \
+  -H 'Content-Type: application/json' \
+  -d '{ "query": "결제 모듈", "k": 5, "group_name": "MyTeamA" }' | jq .
+```
+
+- Embed arbitrary content (POST)
+```
+curl -sS -X POST http://localhost:8001/api/v1/embed-content \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "source_type": "text",
+    "source_data": "This is a sample content to embed",
+    "group_name": "docs",
+    "title": "Sample"
+  }' | jq .
+```
+
+- List all groups (GET)
+```
+curl -sS http://localhost:8001/api/v1/groups | jq .
+```
+
+- Ingest RDB schema (POST)
+```
+curl -sS -X POST http://localhost:8001/api/v1/ingest_rdb_schema | jq .
 ```
 
 - Chat completion (optional; requires a configured model in Backend)

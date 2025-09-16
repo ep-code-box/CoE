@@ -15,6 +15,13 @@ CoE 프로젝트의 두 서비스 모두 **Swagger UI**를 통해 API를 쉽게 
 - **OpenAPI JSON**: http://localhost/openapi.json
 
 ### CoE-RagPipeline (포트 8001, Nginx 프록시 제공)
+
+NOTE: RAG는 Backend 경유 사용이 권장되며, 직접 접근은 유예 기간 이후 중단될 예정입니다.
+테스트/스크립트는 Backend 엔드포인트를 기준으로 마이그레이션 해 주세요.
+
+또한, 기존 `/api/v1/enhanced/*` 엔드포인트는 제거되었습니다. 고급 분석(트리시터/정적/의존성 분석)은 `/api/v1/analyze` 요청 본문에 다음 플래그를 포함해 사용하세요:
+
+- `include_tree_sitter`, `include_static_analysis`, `include_dependency_analysis`, `generate_report`
 - **Swagger UI (직접 접근)**: http://localhost:8001/docs
 - **ReDoc (직접 접근)**: http://localhost:8001/redoc
 - **OpenAPI JSON (직접 접근)**: http://localhost:8001/openapi.json
