@@ -29,10 +29,12 @@ if [[ ${DEV_ONLY} -eq 0 ]]; then
   echo "[run_edge] Bringing up edge via compose: ${COMPOSE_FILE} (project: coe)"
   docker compose -p coe -f "${COMPOSE_FILE}" up -d nginx-edge
   echo "[run_edge] Edge running (ports: 80 prod, 8080 dev). Quick checks:"
-  echo "  - Prod Backend:   curl -I http://localhost/health"
-  echo "  - Prod RAG:       curl -I http://localhost/rag/health"
-  echo "  - Dev Backend:    curl -I http://localhost:8080/health"
-  echo "  - Dev RAG:        curl -I http://localhost:8080/rag/health"
+  echo "  - LangFlow(prod): curl -I http://localhost/"
+  echo "  - Backend(prod):  curl -I http://localhost/agent/health"
+  echo "  - RAG(prod):      curl -I http://localhost/rag/health"
+  echo "  - LangFlow(dev):  curl -I http://localhost:8080/"
+  echo "  - Backend(dev):   curl -I http://localhost:8080/agent/health"
+  echo "  - RAG(dev):       curl -I http://localhost:8080/rag/health"
   echo "  - Edge logs:      docker compose -p coe -f ${COMPOSE_FILE} logs -f nginx-edge"
   exit 0
 fi
@@ -56,6 +58,7 @@ docker run -d --name "${EDGE_NAME}" \
   owasp/modsecurity-crs:nginx nginx -g 'daemon off;'
 
 echo "[run_edge] Done. Quick checks:"
-echo "  - Dev Backend:    curl -I http://localhost:8080/health"
+echo "  - LangFlow(dev):  curl -I http://localhost:8080/"
+echo "  - Backend(dev):   curl -I http://localhost:8080/agent/health"
 echo "  - Dev RAG:        curl -I http://localhost:8080/rag/health"
 echo "  - Edge logs:      docker logs -f ${EDGE_NAME}"

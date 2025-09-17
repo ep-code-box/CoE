@@ -3,8 +3,8 @@
 이 문서는 HTTP 기반(HTTPS 미사용) 배포의 최소 절차를 제공합니다. Edge Nginx는 prod를 80 포트, dev를 8080 포트로 프록시합니다.
 
 요약
-- Prod: http://greatcoe.cafe24.com → prod backend(:18000), /rag/ → prod RAG(:18001)
-- Dev: http://greatcoe.cafe24.com:8080 → dev backend(:18002), /rag/ → dev RAG(:18003)
+- Prod: http://greatcoe.cafe24.com → LangFlow UI(7860), /agent/ → prod backend(:18000), /rag/ → prod RAG(:18001)
+- Dev: http://greatcoe.cafe24.com:8080 → LangFlow UI(7860), /agent/ → dev backend(:18002), /rag/ → dev RAG(:18003)
 - Monitoring: http://greatcoe.cafe24.com/grafana/ (공용 Grafana), /loki/ (옵션: Loki API)
 
 준비
@@ -59,8 +59,11 @@ sudo docker compose -p coe -f docker-compose.edge.yml up -d
 ```
 4) 헬스 체크
 ```
-curl -I http://greatcoe.cafe24.com
-curl -I http://greatcoe.cafe24.com:8080
+curl -I http://greatcoe.cafe24.com              # LangFlow (root)
+curl -I http://greatcoe.cafe24.com/agent/health # Backend (prod)
+curl -I http://greatcoe.cafe24.com/rag/health   # RAG (prod)
+curl -I http://greatcoe.cafe24.com:8080         # LangFlow (dev)
+curl -I http://greatcoe.cafe24.com:8080/agent/health
 curl -I http://greatcoe.cafe24.com:8080/rag/health
 ```
 5) 업데이트(재배포)

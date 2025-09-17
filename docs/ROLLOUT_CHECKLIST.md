@@ -37,7 +37,8 @@ docker compose -f docker-compose.edge.yml -p coe exec nginx-edge nginx -s reload
 ```
 
 ## 헬스 체크 / 스모크 테스트
-- 백엔드 헬스: `curl -i http://greatcoe.cafe24.com/health` (루트 `/`의 404는 정상)
+- 백엔드 헬스: `curl -i http://greatcoe.cafe24.com/agent/health`
+- 루트 `/`는 LangFlow UI. 상태 확인은 200 또는 3xx 응답이면 정상
 - RAG 헬스: `curl -i http://greatcoe.cafe24.com/rag/health` (HEAD는 405, GET은 200)
 - 추가 API 스모크: `docs/curl-checks.md` 참조 (Flows 등록/실행, Embeddings, Chat 등)
 

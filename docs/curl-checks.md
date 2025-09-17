@@ -5,7 +5,7 @@ IMPORTANT: RAG Pipeline는 향후 Backend를 통해서만 호출하도록 전환
 반드시 Backend 엔드포인트를 사용하세요. (적용은 유예 기간 후 순차적 진행)
 
 > 참고: docker-compose.local.yml 또는 dev.yml로 올렸다면
-> - Backend: `http://localhost` (nginx 프록시)
+- Backend: `http://localhost/agent` (nginx 프록시, prefix strip)
 > - RAG Pipeline: `http://localhost:8001` (직접 호출은 곧 중단 예정, Backend 경유 권장)
 > - 로컬 self-signed HTTPS를 쓰면 `-k` 옵션을 추가하세요.
 
@@ -14,13 +14,13 @@ IMPORTANT: RAG Pipeline는 향후 Backend를 통해서만 호출하도록 전환
 - List LangFlows (GET)
 
 ```
-curl -sS http://localhost/flows/ | jq .
+curl -sS http://localhost/agent/flows/ | jq .
 ```
 
 - Register/Upsert a LangFlow (POST)
 
 ```
-curl -sS -X POST http://localhost/flows/ \
+curl -sS -X POST http://localhost/agent/flows/ \
   -H 'Content-Type: application/json' \
   -d '{
     "endpoint": "hello-flow",                             
@@ -54,7 +54,7 @@ curl -sS -X POST http://localhost/flows/run/hello-flow \
 - Embeddings proxy (POST → delegates to RAG Pipeline)
 
 ```
-curl -sS -X POST http://localhost/v1/embeddings \
+curl -sS -X POST http://localhost/agent/v1/embeddings \
   -H 'Content-Type: application/json' \
   -d '{
     "model": "text-embedding-3-large",
@@ -66,7 +66,7 @@ curl -sS -X POST http://localhost/v1/embeddings \
 
 - Start analysis with enhanced flags (POST)
 ```
-curl -sS -X POST http://localhost:8001/api/v1/analyze \
+curl -sS -X POST http://localhost/rag/api/v1/analyze \
   -H 'Content-Type: application/json' \
   -d '{
     "repositories": [{"url": "https://github.com/octocat/Hello-World.git", "branch": "main"}],
@@ -83,19 +83,19 @@ curl -sS -X POST http://localhost:8001/api/v1/analyze \
 
 - Get analysis result (GET)
 ```
-curl -sS http://localhost:8001/api/v1/results/<analysis_id> | jq .
+curl -sS http://localhost/rag/api/v1/results/<analysis_id> | jq .
 ```
 
 - Vector search with group filter (POST)
 ```
-curl -sS -X POST http://localhost:8001/api/v1/search \
+curl -sS -X POST http://localhost/rag/api/v1/search \
   -H 'Content-Type: application/json' \
   -d '{ "query": "결제 모듈", "k": 5, "group_name": "MyTeamA" }' | jq .
 ```
 
 - Embed arbitrary content (POST)
 ```
-curl -sS -X POST http://localhost:8001/api/v1/embed-content \
+curl -sS -X POST http://localhost/rag/api/v1/embed-content \
   -H 'Content-Type: application/json' \
   -d '{
     "source_type": "text",
@@ -107,12 +107,12 @@ curl -sS -X POST http://localhost:8001/api/v1/embed-content \
 
 - List all groups (GET)
 ```
-curl -sS http://localhost:8001/api/v1/groups | jq .
+curl -sS http://localhost/rag/api/v1/groups | jq .
 ```
 
 - Ingest RDB schema (POST)
 ```
-curl -sS -X POST http://localhost:8001/api/v1/ingest_rdb_schema | jq .
+curl -sS -X POST http://localhost/rag/api/v1/ingest_rdb_schema | jq .
 ```
 
 - Chat completion (optional; requires a configured model in Backend)
@@ -130,7 +130,7 @@ curl -sS -X POST http://localhost/v1/chat/completions \
 - Chat completion with group filter (optional)
 
 ```
-curl -sS -X POST http://localhost/v1/chat/completions \
+curl -sS -X POST http://localhost/agent/v1/chat/completions \
   -H 'Content-Type: application/json' \
   -d '{
     "model": "ax4",
@@ -145,13 +145,13 @@ curl -sS -X POST http://localhost/v1/chat/completions \
 - Health (GET)
 
 ```
-curl -sS http://localhost:8001/health | jq .
+curl -sS http://localhost/rag/health | jq .
 ```
 
 - Vector search (POST)
 
 ```
-curl -sS -X POST http://localhost:8001/api/v1/search \
+curl -sS -X POST http://localhost/rag/api/v1/search \
   -H 'Content-Type: application/json' \
   -d '{
     "query": "FastAPI 라우터",
@@ -162,7 +162,7 @@ curl -sS -X POST http://localhost:8001/api/v1/search \
 - Create embeddings (POST)
 
 ```
-curl -sS -X POST http://localhost:8001/api/v1/embeddings \
+curl -sS -X POST http://localhost/rag/api/v1/embeddings \
   -H 'Content-Type: application/json' \
   -d '{
     "model": "text-embedding-3-large",
@@ -173,7 +173,7 @@ curl -sS -X POST http://localhost:8001/api/v1/embeddings \
 - Vector DB stats (GET)
 
 ```
-curl -sS http://localhost:8001/api/v1/stats | jq .
+curl -sS http://localhost/rag/api/v1/stats | jq .
 ```
 
 ## Tips
