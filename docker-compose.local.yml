@@ -70,6 +70,12 @@ services:
       - RELOAD=true
       - RUN_MIGRATIONS=false
       - ROOT_PATH=/rag
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - CHROMA_HOST=chroma
+      - CHROMA_PORT=8000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     volumes:
       - ./CoE-RagPipeline:/app
     ports:
