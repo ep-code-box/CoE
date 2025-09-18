@@ -7,12 +7,20 @@ CoE 프로젝트의 두 서비스 모두 **Swagger UI**를 통해 API를 쉽게 
 - 마이그레이션: `docs/OPERATIONS.md`
 - cURL 예시 모음: `docs/curl-checks.md`
 
+## 🔐 운영 공개 정책
+
+- 운영/엣지 Nginx는 `/docs`, `/redoc`, `/openapi.json` (및 `/agent/*`, `/rag/*` 하위 경로)을 404로 차단합니다.
+- FastAPI 서비스도 기본값으로 문서를 비활성화합니다. 임시로 열어야 한다면 컨테이너 환경변수 `ENABLE_DOCS=true`(또는 `1`, `yes`, `on`)를 지정한 뒤 재시작하세요.
+- 개발 프로필은 `APP_ENV=development`이면 자동으로 문서를 노출합니다. 운영에서 열었으면 점검 후 다시 끄는 것을 권장합니다.
+
 ## 🔗 Swagger UI 접근 경로
 
 ### CoE-Backend (Nginx 프록시)
 - **Swagger UI**: http://localhost/docs
 - **ReDoc**: http://localhost/redoc  
 - **OpenAPI JSON**: http://localhost/openapi.json
+
+> 운영 도메인에서는 기본적으로 404가 반환됩니다. 임시 공개 시 `ENABLE_DOCS=true`를 설정하고 서비스 재시작 후 접근하세요.
 
 ### CoE-RagPipeline (포트 8001, Nginx 프록시 제공)
 
@@ -30,6 +38,8 @@ NOTE: RAG는 Backend 경유 사용이 권장되며, 직접 접근은 유예 기�
 - **OpenAPI JSON (Nginx 경유)**: http://localhost/rag/openapi.json
 
 > Edge(dev) 프록시(8080) 사용 시: http://localhost:8080/rag/docs
+
+> 운영 및 Edge WAF 구간에서는 위 경로가 404로 차단됩니다. 점검이 필요하면 RAG 컨테이너에 `ENABLE_DOCS=true`를 지정하고 로컬 포트 포워딩 등 제한된 경로로만 접근하세요.
 
 문자가 깨지거나 리소스가 로드되지 않으면, RAG 서비스에 루트 경로를 지정하세요.
 
