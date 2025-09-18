@@ -12,6 +12,7 @@ CoE 프로젝트의 두 서비스 모두 **Swagger UI**를 통해 API를 쉽게 
 - 운영/엣지 Nginx는 `/docs`, `/redoc`, `/openapi.json` (및 `/agent/*`, `/rag/*` 하위 경로)을 404로 차단합니다.
 - FastAPI 서비스도 기본값으로 문서를 비활성화합니다. 임시로 열어야 한다면 컨테이너 환경변수 `ENABLE_DOCS=true`(또는 `1`, `yes`, `on`)를 지정한 뒤 재시작하세요.
 - 개발 프로필은 `APP_ENV=development`이면 자동으로 문서를 노출합니다. 운영에서 열었으면 점검 후 다시 끄는 것을 권장합니다.
+- 프록시 하위 경로(`/agent`, `/rag`)에서 서비스할 땐 각 컨테이너에 `ROOT_PATH`를 설정하세요. 예: Edge dev 백엔드 → `ROOT_PATH=/agent`, RAG → `ROOT_PATH=/rag`.
 
 ## 🔗 Swagger UI 접근 경로
 
@@ -39,7 +40,7 @@ NOTE: RAG는 Backend 경유 사용이 권장되며, 직접 접근은 유예 기�
 
 > Edge(dev) 프록시(8080) 사용 시: http://localhost:8080/rag/docs
 
-> 운영용 Edge(80)에서는 Swagger/OpenAPI가 404로 차단됩니다. 개발 Edge(8080)나 로컬 환경에서는 그대로 열려 있으니 점검 용도로 활용하세요. 운영에서 임시로 열어야 한다면 컨테이너에 `ENABLE_DOCS=true`를 지정한 뒤 제한된 경로로 연결하는 것을 권장합니다.
+> 운영용 Edge(80)에서는 Swagger/OpenAPI가 404로 차단됩니다. 개발 Edge(8080)나 로컬 환경에서는 그대로 열려 있으니 점검 용도로 활용하세요. 운영에서 임시로 열어야 한다면 컨테이너에 `ENABLE_DOCS=true`, 프록시 경로에 맞는 `ROOT_PATH`를 지정한 뒤 제한된 경로로 연결하는 것을 권장합니다.
 
 문자가 깨지거나 리소스가 로드되지 않으면, RAG 서비스에 루트 경로를 지정하세요.
 
