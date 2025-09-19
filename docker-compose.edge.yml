@@ -32,8 +32,6 @@ services:
       - ALL
     cap_add:
       - NET_BIND_SERVICE
-      - CHOWN
-      - FOWNER
     # read_only 루트FS는 OWASP CRS가 설정 파일을 렌더링/갱신할 때 문제를 유발할 수 있음
     # 필요 시 다시 켤 수 있으나, 기본은 쓰기 가능하도록 둡니다.
     tmpfs:
