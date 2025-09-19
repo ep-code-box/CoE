@@ -12,6 +12,7 @@ services:
     user: "0:0"
     ports:
       - "80:80"
+      - "443:443"
       - "8080:8080"
     volumes:
       # Provide our config as templates the image will render into /etc/nginx/*
