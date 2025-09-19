@@ -1,8 +1,11 @@
 #!/bin/sh
 set -e
 
+
 MODSEC_DIR="/etc/modsecurity.d"
 CRS_TARGET="$MODSEC_DIR/owasp-crs/crs-setup.conf"
+
+mkdir -p "$MODSEC_DIR"
 
 # Seed base ModSecurity config (modsecurity.conf, unicode.mapping, etc.) if missing
 if [ ! -f "$MODSEC_DIR/modsecurity.conf" ]; then
@@ -69,9 +72,7 @@ if [ ! -f "$CRS_TARGET" ] && [ -f "$MODSEC_DIR/owasp-crs/crs-setup.conf.example"
 fi
 
 # Ensure base setup.conf exists for downstream scripts
-if [ ! -f "$MODSEC_DIR/setup.conf" ]; then
-    printf '%s\n' "SecRuleEngine DetectionOnly" > "$MODSEC_DIR/setup.conf"
-fi
+printf '%s\n' "SecRuleEngine DetectionOnly" > "$MODSEC_DIR/setup.conf"
 
 # Install our override config if provided via template
 OVERRIDE_TEMPLATE="/etc/nginx/templates/modsecurity.d/modsecurity-override.conf.template"
