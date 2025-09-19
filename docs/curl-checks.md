@@ -43,6 +43,32 @@ Notes
 - `flow_body`: LangFlow JSON 스텁. 최소 `name`, `id`, `data.nodes`, `data.edges`가 필요합니다.
 - `contexts` 또는 `context`: 이 Flow를 노출할 프론트 컨텍스트 목록입니다(예: `aider`, `continue.dev`, `openWebUi`).
 
+### 그룹 전용 플로우 저장 예시
+
+그룹별 노출을 제어하려면 `context_groups` 항목을 포함시키세요. 샘플 JSON은 `docs/examples/flows_save_group_sample.json`에 있으며, 아래처럼 바로 전송할 수 있습니다.
+
+```bash
+curl -sS -X POST http://localhost/agent/flows/ \
+  -H 'Content-Type: application/json' \
+  -d @docs/examples/flows_save_group_sample.json | jq .
+```
+
+- `contexts`: 기본 컨텍스트 목록입니다.
+- `context_groups`: 컨텍스트마다 허용할 `group_name` 배열입니다. 값을 비우거나 생략하면 공용(NULL) 매핑으로 저장됩니다.
+- 샘플에서는 `aider` 컨텍스트가 `coe-core-team`, `coe-infra` 그룹에만 노출되고, `openWebUi`는 공용으로 유지됩니다.
+
+### Python 도구 그룹 필터 샘플
+
+만 나이 계산기(`calculate_international_age`)를 특정 그룹에게만 보이도록 하려면 `tools/age_calculator_map.py`처럼 `allowed_groups`를 설정하면 됩니다. 예시 스텁은 `docs/examples/tool_allowed_groups_sample.py`에 있습니다.
+
+```python
+# tools/age_calculator_map.py
+tool_contexts = ["aider", "continue.dev"]
+allowed_groups = ["coe"]  # coe 그룹 세션에만 노출
+```
+
+`ENABLE_GROUP_FILTERING=true` 환경에서 그룹이 `coe`가 아닌 세션은 이 도구를 볼 수 없고, 공용 도구만 노출됩니다.
+
 - Execute a registered Flow (POST)
 
 ```

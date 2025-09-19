@@ -50,9 +50,9 @@
 - `group_name`이 없을 때: 공용 후보만 사용합니다.
 
 **제어 플래그**
-- `ENABLE_GROUP_FILTERING` (기본: false)
-  - true: 본 문서 규칙을 적용.
-  - false: 그룹 필터를 완전히 무시(완전 하위 호환). 롤백 스위치로 사용.
+- `ENABLE_GROUP_FILTERING` (기본: true)
+  - true: 본 문서 규칙을 적용(기본값).
+  - false: 그룹 필터를 완전히 무시(완전 하위 호환). 긴급 롤백용 토글.
 
 **정규화/검증**
 - 요청 진입 시 소문자 정규화/트림.
@@ -65,7 +65,7 @@
 - 메트릭: `tools.candidates.*`, `flows.candidates.*`에 `context`, `group` 라벨 부여.
 
 **마이그레이션 계획(구조화 우선)**
-- 0단계: `ENABLE_GROUP_FILTERING=false` 상태로 코드 경로 도입(현행 유지).
+- 0단계: 기본값(true)로 운영 가능한지 확인하고, 필요 시 `ENABLE_GROUP_FILTERING=false`로 즉시 롤백할 수 있도록 준비.
 - 1단계: Alembic
   - `langflow_tool_mappings`에 `group_name`(NULL 허용) 추가.
   - 인덱스/유니크 제약 추가.

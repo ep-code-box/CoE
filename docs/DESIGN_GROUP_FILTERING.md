@@ -52,9 +52,9 @@
 - If `group_name` absent: use public candidates only. No hidden group-restricted candidates are surfaced.
 
 **Control Flags**
-- `ENABLE_GROUP_FILTERING` (env, default: false for rollout)
-  - true: apply the rules above.
-  - false: ignore group filters entirely (full backward compatibility). Use for quick rollback.
+- `ENABLE_GROUP_FILTERING` (env, default: true)
+  - true (default): apply the rules above.
+  - false: ignore group filters entirely (full backward compatibility). Use for quick rollback or legacy debugging.
 
 **Normalization & Validation**
 - Normalize `group_name` to lowercase and trim whitespace at request ingress.
@@ -68,7 +68,7 @@
 - Add metrics counters: `tools.candidates.total`, `tools.candidates.filtered`, `flows.candidates.total`, `flows.candidates.filtered` with labels `context`, `group`.
 
 **Migration Plan (Structured First-Class)**
-- Phase 0: Introduce code paths behind `ENABLE_GROUP_FILTERING=false`. Keep current behavior.
+- Phase 0: Ensure code behaves with filtering enabled by default. Provide a rollback flag (`ENABLE_GROUP_FILTERING=false`).
 - Phase 1: Alembic migration
   - Add `group_name` (NULLABLE) to `langflow_tool_mappings`.
   - Add indexes/constraints listed above.
