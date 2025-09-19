@@ -13,6 +13,7 @@ services:
     image: owasp/modsecurity-crs:nginx
     environment:
       - MODSECURITY_DETECTION_ONLY=off
+    user: "0:0"
     ports:
       - "80:80"
       - "8080:8080"
