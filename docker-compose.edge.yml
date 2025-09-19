@@ -4,9 +4,6 @@ networks:
   coe-edge-net:
     driver: bridge
 
-volumes:
-  modsec-conf-edge:
-
 services:
   nginx-edge:
     image: owasp/modsecurity-crs:nginx
@@ -17,7 +14,6 @@ services:
       - "80:80"
       - "8080:8080"
     volumes:
-      - modsec-conf-edge:/etc/modsecurity.d
       # Provide our config as templates the image will render into /etc/nginx/*
       - ./nginx/nginx.edge.conf:/etc/nginx/templates/nginx.conf.template:ro
       - ./nginx/waf/modsecurity-override.conf:/etc/nginx/templates/modsecurity.d/modsecurity-override.conf.template:ro
