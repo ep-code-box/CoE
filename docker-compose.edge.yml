@@ -19,6 +19,7 @@ services:
       - ./nginx/waf/modsecurity-override.conf:/etc/nginx/templates/modsecurity.d/modsecurity-override.conf.template:ro
       - ./nginx/ip-allowlist.conf:/etc/nginx/templates/conf.d/ip-allowlist.conf.template:ro
       - ./nginx/waf/bootstrap-modsec.sh:/docker-entrypoint.d/05-bootstrap-modsec.sh:ro
+      - ./nginx/waf/40-disable-modsec-copy.sh:/docker-entrypoint.d/40-disable-modsec-copy.sh:ro
       - /home/greatjlim/projects/certbot/etc:/etc/letsencrypt:ro
       - /home/greatjlim/projects/certbot/www:/var/www/certbot:ro
       # Logs

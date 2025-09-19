@@ -68,4 +68,10 @@ if [ ! -f "$CRS_TARGET" ] && [ -f "$MODSEC_DIR/owasp-crs/crs-setup.conf.example"
     cp "$MODSEC_DIR/owasp-crs/crs-setup.conf.example" "$CRS_TARGET"
 fi
 
+# Install our override config if provided via template
+OVERRIDE_TEMPLATE="/etc/nginx/templates/modsecurity.d/modsecurity-override.conf.template"
+if [ -f "$OVERRIDE_TEMPLATE" ]; then
+    cp "$OVERRIDE_TEMPLATE" "$MODSEC_DIR/modsecurity-override.conf"
+fi
+
 exit 0
