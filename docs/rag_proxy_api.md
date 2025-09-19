@@ -115,12 +115,14 @@ Content-Type: application/json
 Optional filters:
 - `analysis_id`: restrict to a specific analysis snapshot.
 - `repository_url`: prefer the latest analysis of a repo.
+- `group_name`: scope results to repositories analyzed for a specific group.
 - `filter_metadata`: pass any field supported by the pipeline’s vector
   store (e.g., `{"document_type": "tech_spec"}`).
 
 선택 필터:
 - `analysis_id`: 특정 분석 결과로 검색 범위를 제한합니다.
 - `repository_url`: 해당 레포지토리의 최신 분석을 우선 사용합니다.
+- `group_name`: 지정한 그룹에 속한 분석 결과로 범위를 한정합니다.
 - `filter_metadata`: 파이프라인 벡터 저장소가 지원하는 메타데이터 필드를 전달합니다
   (예: `{"document_type": "tech_spec"}`).
 
