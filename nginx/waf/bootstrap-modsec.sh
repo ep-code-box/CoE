@@ -68,6 +68,11 @@ if [ ! -f "$CRS_TARGET" ] && [ -f "$MODSEC_DIR/owasp-crs/crs-setup.conf.example"
     cp "$MODSEC_DIR/owasp-crs/crs-setup.conf.example" "$CRS_TARGET"
 fi
 
+# Ensure base setup.conf exists for downstream scripts
+if [ ! -f "$MODSEC_DIR/setup.conf" ]; then
+    printf '%s\n' "SecRuleEngine DetectionOnly" > "$MODSEC_DIR/setup.conf"
+fi
+
 # Install our override config if provided via template
 OVERRIDE_TEMPLATE="/etc/nginx/templates/modsecurity.d/modsecurity-override.conf.template"
 if [ -f "$OVERRIDE_TEMPLATE" ]; then
