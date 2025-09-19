@@ -36,43 +36,41 @@ if [ ! -f "$MODSEC_DIR/unicode.mapping" ]; then
     done
 fi
 
-# Populate OWASP CRS bundle when not already present
-if [ -f "$CRS_TARGET" ]; then
-    exit 0
-fi
-
 mkdir -p "$MODSEC_DIR/owasp-crs"
-for candidate in \
-    /usr/local/owasp-modsecurity-crs \
-    /usr/local/owasp-crs \
-    /opt/owasp-crs \
-    /usr/share/modsecurity-crs \
-    /etc/modsecurity.d/owasp-crs.dist
- do
-    if [ -d "$candidate" ]; then
-        if [ -f "$candidate/crs-setup.conf" ] || [ -f "$candidate/crs-setup.conf.example" ]; then
-            cp -R "$candidate"/. "$MODSEC_DIR/owasp-crs"/
-            if [ ! -f "$CRS_TARGET" ] && [ -f "$MODSEC_DIR/owasp-crs/crs-setup.conf.example" ]; then
-                cp "$MODSEC_DIR/owasp-crs/crs-setup.conf.example" "$CRS_TARGET"
+if [ ! -f "$CRS_TARGET" ]; then
+    for candidate in \
+        /usr/local/owasp-modsecurity-crs \
+        /usr/local/owasp-crs \
+        /opt/owasp-crs \
+        /usr/share/modsecurity-crs \
+        /etc/modsecurity.d/owasp-crs.dist
+    do
+        if [ -d "$candidate" ]; then
+            if [ -f "$candidate/crs-setup.conf" ] || [ -f "$candidate/crs-setup.conf.example" ]; then
+                cp -R "$candidate"/. "$MODSEC_DIR/owasp-crs"/
+                break
             fi
-            exit 0
+        fi
+    done
+
+    # Fallback: try to locate crs-setup.conf anywhere
+    if [ ! -f "$CRS_TARGET" ]; then
+        FOUND=$(find / -maxdepth 6 -type f -name "crs-setup.conf" 2>/dev/null | head -n 1)
+        if [ -n "$FOUND" ]; then
+            SRC_DIR=$(dirname "$FOUND")
+            cp -R "$SRC_DIR"/. "$MODSEC_DIR/owasp-crs"/
         fi
     fi
-done
 
-# Fallback: try to locate crs-setup.conf anywhere
-FOUND=$(find / -maxdepth 6 -type f -name "crs-setup.conf" 2>/dev/null | head -n 1)
-if [ -n "$FOUND" ]; then
-    SRC_DIR=$(dirname "$FOUND")
-    cp -R "$SRC_DIR"/. "$MODSEC_DIR/owasp-crs"/
-fi
-
-if [ ! -f "$CRS_TARGET" ] && [ -f "$MODSEC_DIR/owasp-crs/crs-setup.conf.example" ]; then
-    cp "$MODSEC_DIR/owasp-crs/crs-setup.conf.example" "$CRS_TARGET"
+    if [ -f "$MODSEC_DIR/owasp-crs/crs-setup.conf.example" ] && [ ! -f "$CRS_TARGET" ]; then
+        cp "$MODSEC_DIR/owasp-crs/crs-setup.conf.example" "$CRS_TARGET"
+    fi
 fi
 
 # Ensure base setup.conf exists for downstream scripts
-printf '%s\n' "SecRuleEngine DetectionOnly" > "$MODSEC_DIR/setup.conf"
+if [ ! -f "$MODSEC_DIR/setup.conf" ]; then
+    printf '%s\n' "SecRuleEngine DetectionOnly" > "$MODSEC_DIR/setup.conf"
+fi
 
 # Install our override config if provided via template
 OVERRIDE_TEMPLATE="/etc/nginx/templates/modsecurity.d/modsecurity-override.conf.template"
