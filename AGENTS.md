@@ -1,58 +1,19 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- `CoE-Backend/`: FastAPI AI agent server (routers in `api/`, orchestration in `core/`, business logic in `services/`, tools in `tools/`, entry `main.py`).
-- `CoE-RagPipeline/`: RAG/analysis service (routers, services, analyzers, entry `main.py`).
-- `docs/`: Deployment, operations, Swagger, and cURL guides.
-- `docker-compose.*.yml`, `nginx/`, `run_all.sh`, `stop_all.sh`, `scripts/`: Compose profiles and helper scripts.
-- Tests (when added): place under `*/tests/` with `test_*.py` files.
+The repository hosts two Python services: `CoE-Backend/` for the FastAPI agent backend and `CoE-RagPipeline/` for retrieval and analysis. Each service organizes HTTP routers under `api/`, orchestration in `core/`, business logic in `services/`, and shared helpers in `tools/`. Entry points live in `main.py`. Tests mirror package paths under `*/tests/test_*.py`. Operational assets, including `docker-compose.*.yml`, `nginx/`, `scripts/`, `run_all.sh`, and `stop_all.sh`, sit at the root. Docs covering deployment, Swagger, and cURL flows reside in `docs/`.
 
 ## Build, Test, and Development Commands
-- Run full stack (all services): `./run_all.sh full`
-- Infra-only for local dev: `./run_all.sh local`
-- Dev profile (backend+rag): `./scripts/run_dev.sh`
-- Prod profile (backend+rag): `./scripts/run_prd.sh`
-- Stop stack: `./stop_all.sh`
-- Run a service locally (Python):
-  - Backend: `(cd CoE-Backend && ./run.sh)` → serves on `:8000`
-  - RAG: `(cd CoE-RagPipeline && ./run.sh)` → serves on `:8001`
-- Compose (explicit):
-  - Dev: `docker compose -f docker-compose.dev.yml up -d`
-  - Prod: `docker compose -f docker-compose.prod.yml up -d`
-  - Edge: `docker compose -f docker-compose.edge.yml up -d`
+Use `./run_all.sh full` to boot every service and dependency, or `./run_all.sh local` when you only need infrastructure for API development. `./scripts/run_dev.sh` and `./scripts/run_prd.sh` compose backend + RAG stacks in their respective profiles. For focused work, run `(cd CoE-Backend && ./run.sh)` or `(cd CoE-RagPipeline && ./run.sh)`. Execute `pytest -q` from each service directory to run tests; add `--cov=.` in the RAG pipeline when coverage is required.
 
 ## Coding Style & Naming Conventions
-- Language: Python 3.11, 4-space indent, type hints for public APIs.
-- Naming: `snake_case` for files/functions, `PascalCase` for classes.
-- Module layout: API routers in `api/`, domain logic in `services/`, app wiring in `core/`, tool modules as `*_tool.py` with maps as `*_map.py`.
-- Lint/format: Backend uses `ruff`; RAG uses `flake8` and `mypy` (see each `requirements*.txt`).
-  - Examples: `ruff check CoE-Backend`, `flake8 CoE-RagPipeline`, `mypy CoE-RagPipeline`.
+Target Python 3.11 with four-space indentation. Expose public APIs with explicit type hints. Follow `snake_case` for modules and functions, `PascalCase` for classes, and suffix tooling modules with `_tool.py` alongside optional `_map.py`. Run `ruff check CoE-Backend` to lint the backend, and use `flake8` plus `mypy` inside `CoE-RagPipeline` per the service-specific `requirements*.txt`.
 
 ## Testing Guidelines
-- Framework: `pytest` (+ `pytest-asyncio` where applicable).
-- Structure: `*/tests/test_*.py`; mirror package paths for clarity.
-- Run: `cd CoE-Backend && pytest -q` or `cd CoE-RagPipeline && pytest -q`.
-- Optional coverage (RAG has pytest-cov): `pytest --cov=.`
+Author tests with `pytest` (and `pytest-asyncio` for async flows). Place fixtures near their consuming modules. Name test files `test_*.py`, mirroring the code directory structure. Run the relevant service test suite before committing, and prefer regression tests for behavioral fixes.
 
 ## Commit & Pull Request Guidelines
-- Observed history: short, informal Korean summaries; no strict convention.
-- Recommended style (new work): Conventional Commits.
-  - Examples: `feat(backend): add dynamic tools API`, `fix(rag): handle large repo clone timeout`.
-- PRs should include: clear description, linked issues, affected services/profiles, config notes (`.env` keys, `RUN_MIGRATIONS` usage), screenshots or sample cURL for API changes, and docs updates when relevant.
+Adopt Conventional Commits, e.g., `feat(backend): add dynamic tools API`. Pull requests should link issues, note affected services or profiles, summarize config/env changes (such as `RUN_MIGRATIONS` or `.env` keys), and include sample cURL commands or screenshots for API-facing updates. Update docs when behavior shifts and flag rollout or migration sequencing as needed.
 
 ## Security & Configuration Tips
-- Never commit secrets; use `.env` files. Seed from `*.env.example`.
-- Control DB migrations via `RUN_MIGRATIONS` (default skip in ops docs); run intentionally in prod.
-- For endpoints and examples, see `docs/SWAGGER_GUIDE.md` and `docs/curl-checks.md`.
-
-## 운영/설계 주의사항
-- Compose 파일 분리: dev/prod/edge/monitor 파일을 별도로 사용합니다. 엣지에서 `/rag/`는 RAG로 프록시되며 `/rag`는 리다이렉트됨.
-- 헬스 체크: 백엔드 `GET /health`, RAG `GET /rag/health`. `HEAD`는 405가 정상, 루트 `/` 404도 정상(Prod에서 문서 비공개).
-- 마이그 순서: 백엔드 → RAG. 테이블 부재 시 RAG 마이그 실패 가능. 필요 시 `scripts/bootstrap_db_dev.sh`로 기초 테이블 생성.
-- RUN_MIGRATIONS: 로컬/개발은 `false` 권장, 운영은 배포 타이밍에만 `true`로 명시 실행.
-- Nginx 변경 반영: `docker compose -f docker-compose.edge.yml restart nginx-edge` (엣지), `docker compose -f docker-compose.local.yml restart nginx` (로컬)
-- DB 설정: MariaDB는 `utf8mb4`/`utf8mb4_unicode_ci` 사용. 볼륨 마운트 경로(Chroma/Maria/Redis) 용량 확인 후 배포.
-- 환경변수: 컨테이너 내 주소 사용(예: Backend→RAG `RAG_PIPELINE_URL=http://coe-ragpipeline-dev:8001`). 호스트 접근은 `host.docker.internal` 필요.
-- 로그: 호스트 로그 경로는 `docs/DEPLOY.md` 참고. 에러 시 `docker compose logs -f <svc>` 우선 확인.
-- 대용량 분석: 대형 Git은 CPU/메모리 소모 큼. RAG 워커/타임아웃 조정 및 단일 요청량 제한 고려.
-- 보안: 키/토큰은 `.env.*`에만, 리포에 커밋 금지. 필요 시 `nginx`에서 IP 제한/기본 인증 추가.
+Keep secrets out of version control; bootstrap from `.env.example`. Default `RUN_MIGRATIONS=false` unless explicitly deploying with migrations enabled. When services communicate in containers, use internal hostnames like `coe-ragpipeline-dev:8001`; fall back to `host.docker.internal` only when the host must reach a container. Inspect service logs via `docker compose logs -f <service>` and restart Nginx with the profile-specific command after config changes.

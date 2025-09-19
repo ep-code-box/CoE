@@ -143,6 +143,8 @@ services:
     volumes:
       - ./db/maria:/var/lib/mysql
       - ./db/init:/docker-entrypoint-initdb.d
+    ports:
+      - "6667:3306"
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       start_period: 10s

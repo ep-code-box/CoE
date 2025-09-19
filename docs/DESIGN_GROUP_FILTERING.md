@@ -20,7 +20,7 @@
   - Table: `langflow_tool_mappings(flow_id, context, group_name NULLABLE, description, …)`
   - Semantics: `group_name = NULL` means public (all groups). Non-NULL means restricted to that group only.
   - Indexes: `idx_ltm_flow_ctx_grp (flow_id, context, group_name)`, plus `idx_ltm_ctx_grp (context, group_name)`.
-  - Constraint: Unique across `(flow_id, context, COALESCE(group_name,''))` to prevent duplicates.
+  - Constraint: keep `(flow_id, context, group_name)` unique. For MySQL compatibility, either (a) add an application-level guard when inserting rows, or (b) introduce a generated column that materializes `COALESCE(group_name,'')` and apply a unique index to that field if the target MySQL version supports it.
 - Python tools (module metadata)
   - Module-level optional `allowed_groups: List[str]` for all tools in a map.
   - Optional `allowed_groups_by_tool: Dict[str, List[str]]` for per-tool granularity.
@@ -40,7 +40,8 @@
 - LangFlow flows
   - If `group_name` is absent: allow a flow if a mapping row exists with `(flow_id, context, group_name IS NULL)`.
   - If `group_name` is present: allow a flow if a mapping row exists with `(flow_id, context, group_name = :group)` OR `(flow_id, context, group_name IS NULL)`.
-  - Public rows (NULL `group_name`) are always eligible; group-specific rows restrict visibility to that group.
+  - When both variants exist, treat the `(context, group_name)` mapping as higher priority than the public `(context, NULL)` row during tool selection.
+  - Public rows (NULL `group_name`) remain eligible so callers without a group still see defaults.
 
 **Fallback Policy (Strict-Safe)**
 - If `group_name` present and filtering yields zero candidates:
@@ -75,6 +76,9 @@
 - Phase 2: Data backfill/compat
   - If composite keys like `context:group` exist in `context`, split into `(context, group_name)` rows.
   - Keep a temporary compatibility read: accept composite context rows for a deprecation window.
+- Phase 2.5: Extend write paths
+  - Update `FlowCreate`/`FlowUpdate` schemas (and the `/flows/save` handler) to accept `(context, allowed_groups)` pairs so authors can seed group-specific mappings via API.
+  - Add admin helpers or CLI scripts to upsert `(context, group_name)` rows directly when needed.
 - Phase 3: Switch on `ENABLE_GROUP_FILTERING=true` in dev/staging, validate logs and counts.
 - Phase 4: Remove composite key support and clean up data; enable in production.
 
@@ -82,6 +86,7 @@
 - Implement feature flag + filtering in dispatcher and flow allow-check.
 - Add `allowed_groups`/`allowed_groups_by_tool` to selected tool maps as needed.
 - Seed public and group-specific LangFlow mapping rows; backfill from composite if present.
+- Update LangFlow CRUD APIs so operators can manage `group_name` assignments without touching the DB manually.
 - Validate in dev/staging; monitor candidate counts and fallback rates; then enable in production.
 
 **Code Touch Points**
@@ -93,6 +98,8 @@
   - `core/agent_nodes.py` in dispatcher node.
 - Map metadata (optional per-tool granularity)
   - Support `allowed_groups` and `allowed_groups_by_tool` in `*_map.py`.
+- LangFlow execution helpers
+  - `services/tool_dispatcher.find_langflow_tool`, `tools/langflow_tool.py` (`list_langflows_run`, `execute_langflow_run`), and auto-routing helpers (`maybe_execute_best_tool*`) must apply the same `(context, group_name)` logic when fetching flows.
 
 **Compatibility & Deprecation**
 - With flag off: behavior identical to current system.

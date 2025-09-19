@@ -19,7 +19,7 @@
   - 테이블: `langflow_tool_mappings(flow_id, context, group_name NULLABLE, description, …)`
   - 의미: `group_name=NULL`은 공용(모든 그룹), 값이 있으면 해당 그룹 전용.
   - 인덱스: `(flow_id, context, group_name)`, 보조로 `(context, group_name)`.
-  - 제약: `(flow_id, context, COALESCE(group_name,''))` 유니크.
+  - 제약: `(flow_id, context, group_name)` 조합이 중복되지 않도록 유지합니다. MySQL 호환을 위해 (a) 애플리케이션 레벨에서 중복 삽입을 차단하거나 (b) `COALESCE(group_name,'')` 값을 생성 컬럼으로 만들어 해당 컬럼에 유니크 인덱스를 적용하는 방식을 배포 환경에 맞춰 선택합니다.
 - Python 도구(모듈 메타데이터)
   - 모듈 전역 `allowed_groups: List[str]`(맵 내 전체 도구 공통 제한).
   - 선택적 `allowed_groups_by_tool: Dict[str, List[str]]`(도구별 세분화).
@@ -38,7 +38,8 @@
 - LangFlow 플로우
   - `group_name` 없음: `(flow_id, context, group_name IS NULL)` 행이 있으면 허용.
   - `group_name` 있음: `(flow_id, context, group_name=:group)` 또는 `(flow_id, context, group_name IS NULL)` 중 하나라도 있으면 허용.
-  - 공용(NULL) 행은 항상 포함 가능, 그룹 전용 행은 해당 그룹에서만 노출.
+  - 두 행이 모두 존재하면 `(context, group_name)` 매핑을 우선 선택하고, 공용 `(context, NULL)` 행은 fallback 용도로 유지합니다.
+  - 공용(NULL) 행은 여전히 그룹 미지정 요청을 위한 기본값입니다.
 
 **폴백 정책(엄격·안전)**
 - `group_name`이 있고 결과가 0개일 때:
@@ -72,6 +73,9 @@
 - 2단계: 데이터 백필/호환
   - 기존 `context:group` 복합 키가 있으면 `(context, group_name)`으로 분리 삽입.
   - 일정 기간 읽기 시 복합 키도 허용(감쇠 경로).
+- 2.5단계: 쓰기 경로 확장
+  - `FlowCreate`/`FlowUpdate` 스키마와 `/flows/save` 핸들러에 `(context, allowed_groups)` 입력을 받아 API로 그룹별 매핑을 등록합니다.
+  - 필요 시 관리용 CLI 또는 어드민 API로 `(context, group_name)` 행을 직접 upsert하는 유틸을 제공합니다.
 - 3단계: dev/staging에서 플래그 on, 로그/카운트 검증.
 - 4단계: 복합 키 읽기 제거 및 데이터 정리, 프로덕션 활성화.
 
@@ -79,6 +83,7 @@
 - 디스패처/허용 검사에 플래그+필터링 구현.
 - 필요한 도구 맵에 `allowed_groups`/`allowed_groups_by_tool` 설정.
 - LangFlow 매핑에 공용/그룹 전용 행 시드(필요 시 복합 키에서 백필).
+- LangFlow CRUD 경로를 갱신해 운영자가 DB를 직접 만지지 않고 `group_name`을 관리할 수 있게 합니다.
 - dev/staging 검증 후 프로덕션 전환.
 
 **코드 변경 지점**
@@ -89,6 +94,8 @@
   - `api/chat_api.py`, `core/agent_nodes.py`에서 `group_name`/플래그 전달.
 - 맵 메타데이터
   - `allowed_groups`와 `allowed_groups_by_tool`(선택)을 인식.
+- LangFlow 실행 경로
+  - `services/tool_dispatcher.find_langflow_tool`, `tools/langflow_tool.py`(`list_langflows_run`, `execute_langflow_run`), 자동 라우팅 헬퍼(`maybe_execute_best_tool*`)에서 동일한 `(context, group_name)` 필터링을 적용합니다.
 
 **호환성/폐기**
 - 플래그 off: 현행과 동일.
