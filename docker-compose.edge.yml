@@ -5,7 +5,6 @@ networks:
     driver: bridge
 
 volumes:
-  nginx-conf-edge:
   modsec-conf-edge:
 
 services:
@@ -18,7 +17,6 @@ services:
       - "80:80"
       - "8080:8080"
     volumes:
-      - nginx-conf-edge:/etc/nginx
       - modsec-conf-edge:/etc/modsecurity.d
       # Provide our config as templates the image will render into /etc/nginx/*
       - ./nginx/nginx.edge.conf:/etc/nginx/templates/nginx.conf.template:ro
