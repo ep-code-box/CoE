@@ -18,6 +18,7 @@ services:
       - ./nginx/nginx.edge.conf:/etc/nginx/templates/nginx.conf.template:ro
       - ./nginx/waf/modsecurity-override.conf:/etc/nginx/templates/modsecurity.d/modsecurity-override.conf.template:ro
       - ./nginx/ip-allowlist.conf:/etc/nginx/templates/conf.d/ip-allowlist.conf.template:ro
+      - ./nginx/waf/bootstrap-modsec.sh:/docker-entrypoint.d/05-bootstrap-modsec.sh:ro
       - /home/greatjlim/projects/certbot/etc:/etc/letsencrypt:ro
       - /home/greatjlim/projects/certbot/www:/var/www/certbot:ro
       # Logs
