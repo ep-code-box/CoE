@@ -38,4 +38,5 @@ services:
       - /var/cache/nginx:rw,mode=1777
       - /var/run:rw,mode=755
       - /tmp:rw,mode=1777
+      - /etc/modsecurity.d:rw,mode=755
     networks: [coe-edge-net]
