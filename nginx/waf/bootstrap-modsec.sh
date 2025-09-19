@@ -13,7 +13,7 @@ for candidate in \
 do
     if [ -d "$candidate" ]; then
         if [ -f "$candidate/crs-setup.conf" ] || [ -f "$candidate/crs-setup.conf.example" ]; then
-            cp -a "$candidate"/. /etc/modsecurity.d/owasp-crs/
+            cp -R "$candidate"/. /etc/modsecurity.d/owasp-crs/
             if [ ! -f "$TARGET" ] && [ -f "/etc/modsecurity.d/owasp-crs/crs-setup.conf.example" ]; then
                 cp "/etc/modsecurity.d/owasp-crs/crs-setup.conf.example" "$TARGET"
             fi
@@ -25,7 +25,7 @@ done
 FOUND=$(find / -maxdepth 6 -type f -name "crs-setup.conf" 2>/dev/null | head -n 1)
 if [ -n "$FOUND" ]; then
     SRC_DIR=$(dirname "$FOUND")
-    cp -a "$SRC_DIR"/. /etc/modsecurity.d/owasp-crs/
+    cp -R "$SRC_DIR"/. /etc/modsecurity.d/owasp-crs/
 fi
 if [ ! -f "$TARGET" ] && [ -f "/etc/modsecurity.d/owasp-crs/crs-setup.conf.example" ]; then
     cp "/etc/modsecurity.d/owasp-crs/crs-setup.conf.example" "$TARGET"
