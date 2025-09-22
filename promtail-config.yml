@@ -19,6 +19,10 @@ scrape_configs:
       - docker: {}
 
     relabel_configs:
+      # Ensure job label is always present for Loki
+      - target_label: job
+        replacement: docker
+
       # read each container's json log file
       - source_labels: ['__meta_docker_container_id']
         target_label: __path__
@@ -29,6 +33,10 @@ scrape_configs:
       - target_label: env
         replacement: local
         action: replace
+
+      # Static label to simplify querying per collector
+      - target_label: source
+        replacement: docker
 
       # container name (strip leading slash)
       - source_labels: ['__meta_docker_container_name']
