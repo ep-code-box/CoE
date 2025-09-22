@@ -5,7 +5,7 @@
   "tags": ["coe", "loki", "logs"],
   "timezone": "",
   "schemaVersion": 39,
-  "version": 3,
+  "version": 4,
   "refresh": "10s",
   "time": { "from": "now-15m", "to": "now" },
   "templating": {
@@ -24,7 +24,8 @@
         "query": "label_values({source=\"docker\"}, job)",
         "includeAll": true,
         "allValue": ".*",
-        "refresh": 2
+        "refresh": 2,
+        "current": { "text": "All", "value": ".*", "selected": true }
       },
       {
         "name": "env",
@@ -34,7 +35,8 @@
         "query": "label_values({source=\"docker\", job=~\"$job\"}, env)",
         "includeAll": true,
         "allValue": ".*",
-        "refresh": 2
+        "refresh": 2,
+        "current": { "text": "All", "value": ".*", "selected": true }
       },
       {
         "name": "service",
@@ -44,7 +46,8 @@
         "query": "label_values({source=\"docker\", job=~\"$job\", env=~\"$env\"}, service)",
         "includeAll": true,
         "allValue": ".*",
-        "refresh": 2
+        "refresh": 2,
+        "current": { "text": "All", "value": ".*", "selected": true }
       },
       {
         "name": "compose_project",
@@ -54,7 +57,8 @@
         "query": "label_values({source=\"docker\", job=~\"$job\", env=~\"$env\", service=~\"$service\"}, compose_project)",
         "includeAll": true,
         "allValue": ".*",
-        "refresh": 2
+        "refresh": 2,
+        "current": { "text": "All", "value": ".*", "selected": true }
       },
       {
         "name": "container",
@@ -64,7 +68,8 @@
         "query": "label_values({source=\"docker\", job=~\"$job\", env=~\"$env\", service=~\"$service\", compose_project=~\"$compose_project\"}, container)",
         "includeAll": true,
         "allValue": ".*",
-        "refresh": 2
+        "refresh": 2,
+        "current": { "text": "All", "value": ".*", "selected": true }
       }
     ]
   },
@@ -87,7 +92,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (service)(rate({source=\\\"docker\\\", job=~\\\"$job\\\", env=~\\\"$env\\\", service=~\\\"$service\\\", compose_project=~\\\"$compose_project\\\", container=~\\\"$container\\\"}[1m]))",
+          "expr": "sum by (service)(rate({source=\"docker\", job=~\"$job\", env=~\"$env\", service=~\"$service\", compose_project=~\"$compose_project\", container=~\"$container\"}[1m]))",
           "queryType": "range",
           "legendFormat": "{{service}}"
         }
@@ -113,7 +118,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (status)(rate(({source=\\\"docker\\\", job=~\\\"$job\\\", env=~\\\"$env\\\", service=~\\\"$service\\\", compose_project=~\\\"$compose_project\\\", container=~\\\"$container\\\"} | pattern \"<_> - <_> [<_>] \\\"<_> <_> HTTP/<_>\\\" <status> <_> \\\"<_>\\\" \\\"<_>\\\" \\\"<_>\\\"\")[1m]))",
+          "expr": "sum by (status)(rate(({source=\"docker\", job=~\"$job\", env=~\"$env\", service=~\"$service\", compose_project=~\"$compose_project\", container=~\"$container\"} | pattern \"<_> - <_> [<_>] \"<_> <_> HTTP/<_>\" <status> <_> \"<_>\" \"<_>\" \"<_>\"\")[1m]))",
           "queryType": "range",
           "legendFormat": "{{status}}"
         }
@@ -146,7 +151,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (service)(rate(({source=\\\"docker\\\", job=~\\\"$job\\\", env=~\\\"$env\\\", service=~\\\"$service\\\", compose_project=~\\\"$compose_project\\\", container=~\\\"$container\\\"} | regexp \" 5[0-9]{2} \" )[1m]))",
+          "expr": "sum by (service)(rate(({source=\"docker\", job=~\"$job\", env=~\"$env\", service=~\"$service\", compose_project=~\"$compose_project\", container=~\"$container\"} | regexp \" 5[0-9]{2} \" )[1m]))",
           "queryType": "range",
           "legendFormat": "{{service}}"
         }
@@ -161,7 +166,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "topk(10, sum by (path)(count_over_time(({source=\\\"docker\\\", job=~\\\"$job\\\", env=~\\\"$env\\\", service=~\\\"$service\\\", compose_project=~\\\"$compose_project\\\", container=~\\\"$container\\\"} | pattern \"<_> - <_> [<_>] \\\"<_> <path> HTTP/<_>\\\" <_> <_> \\\"<_>\\\" \\\"<_>\\\" \\\"<_>\\\"\")[5m])))",
+          "expr": "topk(10, sum by (path)(count_over_time(({source=\"docker\", job=~\"$job\", env=~\"$env\", service=~\"$service\", compose_project=~\"$compose_project\", container=~\"$container\"} | pattern \"<_> - <_> [<_>] \"<_> <path> HTTP/<_>\" <_> <_> \"<_>\" \"<_>\" \"<_>\"\")[5m])))",
           "queryType": "instant",
           "legendFormat": "{{path}}"
         }
@@ -176,7 +181,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "topk(10, sum by (container)(count_over_time({source=\\\"docker\\\", job=~\\\"$job\\\", env=~\\\"$env\\\", service=~\\\"$service\\\", compose_project=~\\\"$compose_project\\\", container=~\\\"$container\\\"}[10m])))",
+          "expr": "topk(10, sum by (container)(count_over_time({source=\"docker\", job=~\"$job\", env=~\"$env\", service=~\"$service\", compose_project=~\"$compose_project\", container=~\"$container\"}[10m])))",
           "queryType": "instant",
           "legendFormat": "{{container}}"
         }
@@ -196,7 +201,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "{source=\\\"docker\\\", job=~\\\"$job\\\", env=~\\\"$env\\\", service=~\\\"$service\\\", compose_project=~\\\"$compose_project\\\", container=~\\\"$container\\\"}",
+          "expr": "{source=\"docker\", job=~\"$job\", env=~\"$env\", service=~\"$service\", compose_project=~\"$compose_project\", container=~\"$container\"}",
           "queryType": "range"
         }
       ]
@@ -215,7 +220,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "{source=\\\"docker\\\", job=~\\\"$job\\\", env=~\\\"$env\\\", service=~\\\"$service\\\", compose_project=~\\\"$compose_project\\\", container=~\\\"$container\\\"} | regexp \" 5[0-9]{2} \"",
+          "expr": "{source=\"docker\", job=~\"$job\", env=~\"$env\", service=~\"$service\", compose_project=~\"$compose_project\", container=~\"$container\"} | regexp \" 5[0-9]{2} \"",
           "queryType": "range"
         }
       ]
