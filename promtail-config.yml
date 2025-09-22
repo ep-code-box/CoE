@@ -22,6 +22,17 @@ scrape_configs:
       # Skip records beyond Loki's retention window (avoids timestamp-too-old errors)
       - drop:
           older_than: 168h
+      # Parse Nginx access logs and expose HTTP labels
+      - match:
+          selector: '{service="nginx"}'
+          stages:
+            - regex:
+                expression: '^(?P<remote_addr>[^ ]+) - (?P<host>[^ ]+) \[(?P<time_local>[^\]]+)\] "(?P<method>[A-Z]+) (?P<path>[^" ]*)(?: (?P<http_protocol>HTTP/[^"]+))?" (?P<status>\d{3}) (?P<body_bytes_sent>\d+)(?: "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)" "(?P<http_x_forwarded_for>[^"]*)")?'
+            - labels:
+                method:
+                path:
+                status:
+                host:
 
     relabel_configs:
       # Ensure job label is always present for Loki
