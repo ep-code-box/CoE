@@ -145,7 +145,7 @@ CREATE TABLE `chat_messages` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `session_id` varchar(100) NOT NULL,
   `role` varchar(50) NOT NULL,
-  `content` text NOT NULL,
+  `content` longtext NOT NULL,
   `timestamp` datetime DEFAULT NULL,
   `turn_number` int(11) NOT NULL,
   `selected_tool` varchar(100) DEFAULT NULL,
