@@ -33,6 +33,17 @@ scrape_configs:
                 path:
                 status:
                 host:
+      # Parse FastAPI/Gunicorn access logs to expose HTTP labels for backend services
+      - match:
+          selector: "{service=~\"coe-backend|coe-ragpipeline\"} |= \" - \\\"\""
+          stages:
+            - regex:
+                expression: "^(?P<level>[A-Z]+): (?P<time_local>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}) - (?P<client_addr>[^ ]+) - \"(?P<method>[A-Z]+) (?P<path>[^\" ]*)(?: (?P<http_protocol>HTTP/[^\"]+))?\" (?P<status>\\d{3})(?: (?P<reason>.*))?$"
+            - labels:
+                method:
+                path:
+                status:
+                client_addr:
 
     relabel_configs:
       # Ensure job label is always present for Loki
