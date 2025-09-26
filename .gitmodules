@@ -4,3 +4,6 @@
 [submodule "CoE-RagPipeline"]
 	path = CoE-RagPipeline
 	url = https://github.com/ep-code-box/CoE-RagPipeline.git
+[submodule "CoE-Agent"]
+	path = CoE-Agent
+	url = https://github.com/ep-code-box/CoE-Agent
