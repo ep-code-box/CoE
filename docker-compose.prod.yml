@@ -12,6 +12,15 @@ services:
       - /home/greatjlim/projects/db/prod/chroma:/data
     networks: [coe-prod-net]
 
+  chroma-external:
+    image: chromadb/chroma:latest
+    profiles: ["external-demo"]
+    ports:
+      - "6670:8000"
+    volumes:
+      - /home/greatjlim/projects/db/prod/chroma_external:/data
+    networks: [coe-prod-net]
+
   mariadb:
     image: mariadb:latest
     environment:
