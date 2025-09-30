@@ -9,6 +9,19 @@ cd "$ROOT_DIR"
 PROJECT="coe-local"
 COMPOSE="docker compose -f docker-compose.local.yml"
 
+PID_SRC="$ROOT_DIR/docs/pid-1.3.19/pidpy-1.3.19-py3-none-linux_x86_64.whl"
+PID_DEST="$ROOT_DIR/CoE-Backend/vendor/pidpy/pidpy-1.3.19-py3-none-linux_x86_64.whl"
+
+if [ -f "$PID_SRC" ]; then
+  mkdir -p "$(dirname "$PID_DEST")"
+  if [ ! -f "$PID_DEST" ] || ! cmp -s "$PID_SRC" "$PID_DEST"; then
+    echo "[run_local] Copying pidpy wheel into backend vendor..."
+    cp "$PID_SRC" "$PID_DEST"
+  fi
+else
+  echo "[run_local] WARNING: pidpy wheel not found at $PID_SRC" >&2
+fi
+
 echo "[run_local] Building local images (backend, ragpipeline)..."
 $COMPOSE -p "$PROJECT" build backend ragpipeline
 

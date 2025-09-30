@@ -6,6 +6,7 @@ db/redis
 .env*
 CoE-Backend/.env*
 CoE-RagPipeline/.env*
+CoE-Backend/vendor/
 !**/.env.example
 *.pyc
 __pycache__/

@@ -17,6 +17,24 @@
   - `false`(기본): Alembic 미실행
   - `true`: 컨테이너 시작 시 `alembic upgrade head` 수행
 
+## PID 기반 개인정보 차단
+- **설치 경로**
+  - 원본 휠: `docs/pid-1.3.19/pidpy-1.3.19-py3-none-linux_x86_64.whl`
+  - 실행 스크립트(`scripts/run_local.sh`, `scripts/run_dev.sh`, `scripts/run_prd.sh`, `CoE-Backend/run.sh`)가 위 파일을 `CoE-Backend/vendor/pidpy/`로 자동 복사한 뒤 설치합니다.
+  - Docker 빌드(`CoE-Backend/Dockerfile`)에서도 동일 휠을 설치하므로 별도 다운로드 없이 일관된 버전을 사용합니다.
+- **동작 방식**
+  - FastAPI 수명주기에서 PID 사전을 선로드하고 종료 시 해제합니다.
+  - 모든 POST 바디·채팅 메시지는 PID로 검사되며, 탐지된 문자열은 로그·DB 저장 전에 마스킹(`*`)됩니다.
+  - 민감 정보가 포함된 사용자 메시지는 즉시 차단되며 고정 응답을 반환합니다:
+    - `"고객 정보 또는 민감한 데이터가 확인되었습니다. 다시 질문 부탁드립니다."`
+  - 차단 응답도 기존 세션 로그에는 마스킹된 상태로 기록됩니다.
+- **설정값**
+  - `ENABLE_PID_DETECTION` (기본 `true`): PID 스캔을 비활성화해야 할 경우만 `false`로 설정
+  - `PID_DATA_PATH`: 기본은 설치된 `pidpy`의 리소스 폴더. 커스텀 사전을 쓸 때만 명시
+- **운영 체크**
+  - `logs/app.log`에 `[PII] session=... masked_types=...` 로그가 나타나면 감지 성공
+  - 차단 시 응답 본문이 위 안내 문구인지 확인하고, 로그에는 원문이 남지 않는지 검증
+
 `docker-compose.yml`에는 아래와 같이 파라미터화되어 있습니다.
 
 ```
