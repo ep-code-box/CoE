@@ -36,6 +36,8 @@ services:
       - RELOAD=true
       - RUN_MIGRATIONS=false
       - RAG_PIPELINE_URL=http://ragpipeline:8001
+      - GUIDE_AGENT_RAG_URL=http://ragpipeline:8001
+      - GUIDE_AGENT_DOC_ROOT=/app/guide_agent_docs
       - DB_HOST=mariadb
       - DB_PORT=3306
       - CHROMA_HOST=chroma
@@ -44,6 +46,7 @@ services:
       - REDIS_PORT=6379
     volumes:
       - ./CoE-Backend:/app
+      - ./CoE-Agent/docs:/app/guide_agent_docs:ro
     depends_on:
       mariadb:
         condition: service_healthy

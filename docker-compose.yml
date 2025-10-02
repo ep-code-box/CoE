@@ -95,6 +95,8 @@ services:
       - LANGFLOW_HOST=langflow
       - LANGFLOW_PORT=7860
       - RAG_PIPELINE_URL=http://host.docker.internal:8001
+      - GUIDE_AGENT_RAG_URL=http://host.docker.internal:8001
+      - GUIDE_AGENT_DOC_ROOT=/app/guide_agent_docs
       - APP_ENV=production
       - DEBUG=false
       - LOG_LEVEL=DEBUG
@@ -105,6 +107,7 @@ services:
     volumes:
       - ./CoE-Backend/flows:/app/flows
       - ./CoE-Backend/logs:/app/logs
+      - ./CoE-Agent/docs:/app/guide_agent_docs:ro
     depends_on:
       chroma:
         condition: service_started

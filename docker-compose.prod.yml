@@ -68,6 +68,8 @@ services:
       - LOG_TO_FILE=true
       - LOG_DIR=/app/logs
       - RAG_PIPELINE_URL=http://ragpipeline:8001
+      - GUIDE_AGENT_RAG_URL=http://ragpipeline:8001
+      - GUIDE_AGENT_DOC_ROOT=/app/guide_agent_docs
     depends_on:
       mariadb:
         condition: service_healthy
@@ -81,6 +83,7 @@ services:
       - "18000:8000"
     volumes:
       - /home/greatjlim/projects/logs/coe-backend/prod:/app/logs
+      - ./CoE-Agent/docs:/app/guide_agent_docs:ro
     networks: [coe-prod-net]
 
   ragpipeline:

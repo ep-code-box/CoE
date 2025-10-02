@@ -9,6 +9,8 @@ services:
       - RELOAD=false
       - RUN_MIGRATIONS=true
       - RAG_PIPELINE_URL=http://host.docker.internal:18003
+      - GUIDE_AGENT_RAG_URL=http://host.docker.internal:18003
+      - GUIDE_AGENT_DOC_ROOT=/app/guide_agent_docs
       - DB_HOST=host.docker.internal
       - DB_PORT=6667
       - CHROMA_HOST=host.docker.internal
@@ -39,4 +41,3 @@ services:
       - "127.0.0.1:18003:8001"  # dev rag exposed only to host
     extra_hosts:
       - "host.docker.internal:host-gateway"
-
