@@ -7,3 +7,6 @@
 [submodule "CoE-Agent"]
 	path = CoE-Agent
 	url = https://github.com/ep-code-box/CoE-Agent
+[submodule "CoE-sllmBuilder"]
+	path = CoE-sllmBuilder
+	url = https://github.com/ep-code-box/CoE-sllmBuilder.git
