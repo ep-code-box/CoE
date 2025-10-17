@@ -11,8 +11,8 @@ services:
       - "80:80"
       - "8080:8080"
     volumes:
-      - ./nginx/nginx.edge.nosec.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ip-allowlist.conf:/etc/nginx/conf.d/ip-allowlist.conf:ro
+      - ./deploy/nginx/nginx.edge.nosec.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/nginx/ip-allowlist.conf:/etc/nginx/conf.d/ip-allowlist.conf:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command: ["nginx","-g","daemon off;"]

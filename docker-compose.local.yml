@@ -10,8 +10,8 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/local-certs:/etc/nginx/certs/local
+      - ./deploy/nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/nginx/local-certs:/etc/nginx/certs/local
     command: >-
       sh -c "
       echo '[nginx] waiting for local self-signed certs...'; \
@@ -98,7 +98,7 @@ services:
     image: alpine:3
     container_name: setup-local-ssl
     volumes:
-      - ./nginx/local-certs:/etc/nginx/certs/local
+      - ./deploy/nginx/local-certs:/etc/nginx/certs/local
     entrypoint: ["/bin/sh","-c"]
     command: >-
       "set -e; \

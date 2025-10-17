@@ -17,11 +17,11 @@ services:
       - "8080:8080"
     volumes:
       # Provide our config as templates the image will render into /etc/nginx/*
-      - ./nginx/nginx.edge.conf:/etc/nginx/templates/nginx.conf.template:ro
-      - ./nginx/waf/modsecurity-override.conf:/etc/nginx/templates/modsecurity.d/modsecurity-override.conf.template:ro
-      - ./nginx/ip-allowlist.conf:/etc/nginx/templates/conf.d/ip-allowlist.conf.template:ro
-      - ./nginx/waf/bootstrap-modsec.sh:/docker-entrypoint.d/05-bootstrap-modsec.sh:ro
-      - ./nginx/waf/40-disable-modsec-copy.sh:/docker-entrypoint.d/40-disable-modsec-copy.sh:ro
+      - ./deploy/nginx/nginx.edge.conf:/etc/nginx/templates/nginx.conf.template:ro
+      - ./deploy/nginx/waf/modsecurity-override.conf:/etc/nginx/templates/modsecurity.d/modsecurity-override.conf.template:ro
+      - ./deploy/nginx/ip-allowlist.conf:/etc/nginx/templates/conf.d/ip-allowlist.conf.template:ro
+      - ./deploy/nginx/waf/bootstrap-modsec.sh:/docker-entrypoint.d/05-bootstrap-modsec.sh:ro
+      - ./deploy/nginx/waf/40-disable-modsec-copy.sh:/docker-entrypoint.d/40-disable-modsec-copy.sh:ro
       - /home/greatjlim/projects/certbot/etc:/etc/letsencrypt:ro
       - /home/greatjlim/projects/certbot/www:/var/www/certbot:ro
     extra_hosts:

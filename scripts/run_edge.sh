@@ -52,9 +52,9 @@ docker run -d --name "${EDGE_NAME}" \
   --tmpfs /var/run:rw,mode=755 \
   --tmpfs /tmp:rw,mode=1777 \
   -e MODSECURITY_DETECTION_ONLY=off \
-  -v "${ROOT_DIR}/nginx/nginx.edge.conf:/etc/nginx/templates/nginx.conf.template:ro" \
-  -v "${ROOT_DIR}/nginx/ip-allowlist.conf:/etc/nginx/templates/conf.d/ip-allowlist.conf.template:ro" \
-  -v "${ROOT_DIR}/nginx/waf/modsecurity-override.conf:/etc/nginx/templates/modsecurity.d/modsecurity-override.conf.template:ro" \
+  -v "${ROOT_DIR}/deploy/nginx/nginx.edge.conf:/etc/nginx/templates/nginx.conf.template:ro" \
+  -v "${ROOT_DIR}/deploy/nginx/ip-allowlist.conf:/etc/nginx/templates/conf.d/ip-allowlist.conf.template:ro" \
+  -v "${ROOT_DIR}/deploy/nginx/waf/modsecurity-override.conf:/etc/nginx/templates/modsecurity.d/modsecurity-override.conf.template:ro" \
   owasp/modsecurity-crs:nginx nginx -g 'daemon off;'
 
 echo "[run_edge] Done. Quick checks:"

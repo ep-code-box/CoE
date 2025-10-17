@@ -35,11 +35,10 @@ echo "[run_edge_nosec] Starting plain nginx on :8080 (container: ${EDGE_NAME})..
 docker run -d --name "${EDGE_NAME}" \
   -p 8080:8080 \
   --add-host host.docker.internal:host-gateway \
-  -v "${ROOT_DIR}/nginx/nginx.edge.nosec.conf:/etc/nginx/nginx.conf:ro" \
+  -v "${ROOT_DIR}/deploy/nginx/nginx.edge.nosec.conf:/etc/nginx/nginx.conf:ro" \
   nginx:1.28-alpine nginx -g 'daemon off;'
 
 echo "[run_edge_nosec] Done. Quick checks:"
 echo "  - Dev Backend:    curl -I http://localhost:8080/health"
 echo "  - Dev RAG:        curl -I http://localhost:8080/rag/health"
 echo "  - Logs:           docker logs -f ${EDGE_NAME}"
-

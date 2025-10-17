@@ -1,0 +1,47 @@
+name: coe-pt
+
+services:
+  nginx-edge:
+    image: owasp/modsecurity-crs:nginx
+    environment:
+      - TZ=${TZ}
+      - MODSECURITY_DETECTION_ONLY=off
+    user: "0:0"
+    ports:
+      - "${NGINX_HTTP_PORT}:80"
+      - "${NGINX_HTTPS_PORT}:443"
+      - "${NGINX_ALT_PORT}:8080"
+    volumes:
+      - ${NGINX_CONF_ROOT}/nginx.edge.conf:/etc/nginx/templates/nginx.conf.template:ro
+      - ${NGINX_CONF_ROOT}/ip-allowlist.conf:/etc/nginx/templates/conf.d/ip-allowlist.conf.template:ro
+      - ${NGINX_CONF_ROOT}/waf/bootstrap-modsec.sh:/docker-entrypoint.d/05-bootstrap-modsec.sh:ro
+      - ${NGINX_CONF_ROOT}/waf/40-disable-modsec-copy.sh:/docker-entrypoint.d/40-disable-modsec-copy.sh:ro
+      - ${CERTBOT_ETC}:/etc/letsencrypt:ro
+      - ${CERTBOT_WWW}:/var/www/certbot:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: ["nginx", "-g", "daemon off;"]
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+      - CHOWN
+      - FOWNER
+      - SETGID
+      - SETUID
+    tmpfs:
+      - /var/cache/nginx:rw,mode=1777
+      - /var/run:rw,mode=755
+      - /tmp:rw,mode=1777
+      - /var/log/nginx:rw,mode=755
+      - /var/log/modsecurity:rw,mode=755
+      - /etc/modsecurity.d:rw,mode=755
+    networks:
+      - coe-pt-net
+    restart: unless-stopped
+
+networks:
+  coe-pt-net:
+    driver: bridge

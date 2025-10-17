@@ -6,9 +6,9 @@ WAF (ModSecurity + OWASP CRS) 적용 가이드
 
 변경 사항 요약
 - 이미지: `nginx-edge` 가 `owasp/modsecurity-crs:nginx` 이미지를 사용합니다.
-- 설정: `nginx/nginx.edge.conf` 의 `http {}` 블록에 이미지 제공 설정 포함
+- 설정: `deploy/nginx/nginx.edge.conf` 의 `http {}` 블록에 이미지 제공 설정 포함
   - `include /etc/nginx/conf.d/modsecurity.conf;`
-- 규칙 오버라이드: `nginx/waf/modsecurity-override.conf` (탐지 모드/커스텀 룰 최소화)
+- 규칙 오버라이드: `deploy/nginx/waf/modsecurity-override.conf` (탐지 모드/커스텀 룰 최소화)
   - compose에서 템플릿 경로로 마운트되어 컨테이너 내 `/etc/nginx/modsecurity.d/modsecurity-override.conf` 로 렌더링됩니다.
 - 템플릿 마운트: 이미지의 엔트리포인트가 템플릿을 `/etc/nginx/*`에 렌더링하므로 최종 경로를 직접 마운트하지 않습니다.
 - 로그: 컨테이너 `/var/log/modsecurity` 가 호스트 `/home/greatjlim/projects/logs/modsecurity` 로 마운트됩니다.
@@ -24,13 +24,13 @@ WAF (ModSecurity + OWASP CRS) 적용 가이드
    - 호스트 로그: `/home/greatjlim/projects/logs/modsecurity/audit.log`
 2) 튜닝: 정상 트래픽에서 반복적으로 탐지되는 룰을 화이트리스트하거나 스코프를 조정합니다.
    - 개별 위치/경로에서만 완화하려면 Nginx `location` 별로 ModSecurity `ctl`/`SecRuleRemoveById` 적용을 고려합니다.
-3) 차단 전환: 충분히 튜닝 후 `nginx/waf/modsecurity-override.conf` 의 `SecRuleEngine On` 으로 변경 → 재시작.
+3) 차단 전환: 충분히 튜닝 후 `deploy/nginx/waf/modsecurity-override.conf` 의 `SecRuleEngine On` 으로 변경 → 재시작.
 
 구성 파일 상세
-- `nginx/waf/modsecurity-override.conf`
+- `deploy/nginx/waf/modsecurity-override.conf`
   - 기본 모드(DetectionOnly)와 최소 커스텀 룰만 포함합니다.
   - 이미지 기본 `modsecurity.conf`와 CRS 포함은 이미지가 책임집니다.
-- `nginx/nginx.edge.conf`
+- `deploy/nginx/nginx.edge.conf`
   - `http` 블록에 WAF 전역 활성화. 서버/위치 단위로 세분화하려면 해당 블록 안에 `modsecurity on;` 을 배치하고 필요 시 `modsecurity_rules`/`_file` 지정.
 
 추가 팁
