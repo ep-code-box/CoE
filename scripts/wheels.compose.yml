@@ -1,0 +1,14 @@
+services:
+  backend-wheels:
+    image: python:3.11-bullseye
+    working_dir: /workspace
+    volumes:
+      - ..:/workspace
+    command: /workspace/scripts/internal/download_backend_wheels.sh
+
+  rag-wheels:
+    image: python:3.11-bullseye
+    working_dir: /workspace
+    volumes:
+      - ..:/workspace
+    command: /workspace/scripts/internal/download_rag_wheels.sh
