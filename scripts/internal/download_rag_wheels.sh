@@ -7,4 +7,4 @@ mkdir -p vendor/wheels
 
 python -m pip install --upgrade pip
 python -m pip download --dest vendor/wheels --requirement requirements.txt
-python -m pip download --dest vendor/wheels uv
+python -m pip download --dest vendor/wheels pip setuptools wheel uv

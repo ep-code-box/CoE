@@ -105,7 +105,7 @@ CREATE TABLE `api_logs` (
   `tool_error_message` text DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `ix_api_logs_id` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=54 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -154,7 +154,7 @@ CREATE TABLE `chat_messages` (
   `tool_metadata` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`tool_metadata`)),
   PRIMARY KEY (`id`),
   KEY `ix_chat_messages_id` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=107 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -285,15 +285,17 @@ CREATE TABLE `langflow_tool_mappings` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `flow_id` varchar(255) NOT NULL,
   `context` varchar(255) NOT NULL,
+  `group_name` varchar(255) DEFAULT NULL,
   `description` text DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `flow_id` (`flow_id`),
   KEY `ix_langflow_tool_mappings_id` (`id`),
   KEY `ix_langflow_tool_mappings_context` (`context`),
+  KEY `idx_ltm_flow_ctx_grp` (`flow_id`,`context`,`group_name`),
+  KEY `idx_ltm_ctx_grp` (`context`,`group_name`),
   CONSTRAINT `langflow_tool_mappings_ibfk_1` FOREIGN KEY (`flow_id`) REFERENCES `langflows` (`flow_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -316,7 +318,7 @@ CREATE TABLE `langflows` (
   UNIQUE KEY `ix_langflows_flow_id` (`flow_id`),
   UNIQUE KEY `ix_langflows_name` (`name`),
   KEY `ix_langflows_id` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -414,4 +416,4 @@ CREATE TABLE `vector_embeddings` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2025-09-11  7:41:59
+-- Dump completed on 2025-10-20  6:54:53
