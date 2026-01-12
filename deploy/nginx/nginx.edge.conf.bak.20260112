@@ -23,58 +23,7 @@ http {
     # 이미지가 생성한 표준 설정을 포함합니다.
     include /etc/nginx/conf.d/modsecurity.conf;
 
-    # Upstream to Traefik HTTP entrypoint (prod)
-    upstream traefik_http {
-        server host.docker.internal:18080;
-        keepalive 32;
-    }
-
-    # HTTP (80): traefik.sk-axstudio.com redirect -> HTTPS
-    server {
-        listen 80;
-        server_name traefik.sk-axstudio.com;
-
-        include /etc/nginx/conf.d/ip-allowlist.conf;
-
-        location /.well-known/acme-challenge/ {
-            root /var/www/certbot;
-            try_files $uri =404;
-        }
-
-        location / {
-            return 301 https://$host$request_uri;
-        }
-    }
-
-    # HTTPS (443): traefik.sk-axstudio.com dashboard
-    server {
-        listen 443 ssl;
-        server_name traefik.sk-axstudio.com;
-
-        access_log /dev/stdout main;
-        error_log  /dev/stderr warn;
-
-        ssl_certificate     /etc/letsencrypt/live/sk-axstudio.com/fullchain.pem;
-        ssl_certificate_key /etc/letsencrypt/live/sk-axstudio.com/privkey.pem;
-
-        include /etc/nginx/conf.d/ip-allowlist.conf;
-
-        location / {
-            modsecurity off;
-            proxy_pass http://traefik_http;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto https;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection $connection_upgrade;
-            proxy_http_version 1.1;
-            proxy_read_timeout 300;
-            proxy_send_timeout 300;
-        }
-    }
-
-    # Legacy direct backends (still used for specific dev/prod paths)
+    # Upstreams to host-exposed dev/prod backends and LangFlow
     upstream prod_backend { server host.docker.internal:18000; }
     upstream prod_rag     { server host.docker.internal:18001; }
     upstream dev_backend  { server host.docker.internal:18002; }
@@ -110,10 +59,10 @@ http {
             return 404;
         }
 
-        # Default root now routes through Traefik -> LangFlow UI
+        # Default root serves LangFlow UI on port 7860
         location / {
             modsecurity off;
-            proxy_pass http://traefik_http;
+            proxy_pass http://langflow_ui;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -290,14 +239,14 @@ http {
             return 404;
         }
 
-        # Default root routes through Traefik -> LangFlow UI
+        # Default root serves LangFlow UI on port 7860
         location / {
             modsecurity off;
-            proxy_pass http://traefik_http;
+            proxy_pass http://langflow_ui;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto https;
+            proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection $connection_upgrade;
             proxy_http_version 1.1;
@@ -497,7 +446,6 @@ http {
             proxy_pass http://dev_rag/docs;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
-
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header X-Forwarded-Prefix /rag;
@@ -541,4 +489,3 @@ http {
 
     # remove HTTPS server for dev
 }
-
